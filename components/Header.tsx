@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   RefreshCw, 
@@ -9,6 +8,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { PortfolioStats } from '../types';
+import { TradingModeToggle } from './TradingModeToggle';
 
 export default function Header() {
   const [portfolioStats, setPortfolioStats] = useState<PortfolioStats>({
@@ -19,14 +19,21 @@ export default function Header() {
     cashBalance: 45000.00,
     marginUsed: 15000.00
   });
-  
+
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [isConnected, setIsConnected] = useState(true);
+  const [tradingMode, setTradingMode] = useState<'paper' | 'live'>('paper');
 
   const handleRefresh = () => {
     setLastUpdate(new Date());
     // Simulate data refresh
     console.log('Refreshing data...');
+  };
+
+  const handleTradingModeChange = (mode: 'paper' | 'live') => {
+    setTradingMode(mode);
+    console.log(`Trading mode changed to: ${mode}`);
+    // In a real application, you would trigger data updates or API changes here
   };
 
   return (
@@ -44,7 +51,7 @@ export default function Header() {
             </button>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -52,11 +59,15 @@ export default function Header() {
               {isConnected ? 'Connected' : 'Disconnected'}
             </span>
           </div>
-          
+
           <div className="flex items-center space-x-2 bg-green-900/20 text-green-400 px-3 py-1 rounded-full text-sm">
             <Zap className="w-4 h-4" />
-            <span>Live Trading</span>
+            <span>{tradingMode === 'live' ? 'Live Trading' : 'Paper Trading'}</span>
           </div>
+          <TradingModeToggle 
+            currentMode={tradingMode} 
+            onChange={handleTradingModeChange} 
+          />
         </div>
       </div>
 
