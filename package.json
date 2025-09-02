@@ -1,0 +1,33 @@
+{
+  "name": "project-chimera---trading-terminal",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "recharts": "^3.1.2",
+    "crypto": "^1.0.1",
+    "@nestjs/common": "^11.1.6",
+    "axios": "^1.11.0",
+    "ws": "^8.18.3",
+    "zustand": "^5.0.8",
+    "@nestjs/schedule": "^6.0.0",
+    "@nestjs/websockets": "^11.1.6",
+    "events": "^3.3.0",
+    "@nestjs/config": "^4.0.2",
+    "zod": "^4.1.5",
+    "packages": "^0.0.8",
+    "@willsoto/nestjs-prometheus": "^6.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

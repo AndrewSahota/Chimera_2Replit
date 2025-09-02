@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Defines the database connection. We're using PostgreSQL.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // This URL will be provided by Docker Compose
+}
+
+// Configures the Prisma Client generator.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ===============================================
+// CORE TRADING MODELS
+// ===============================================
+
+model Position {
+  id             String   @id @default(cuid())
+  symbol         String
+  quantity       Float
+  averagePrice   Float
+  unrealizedPnl  Float    @default(0)
+  botName        String   // Which bot owns this position
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([botName, symbol]) // A bot can only have one position per symbol
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  symbol         String
+  side           String      // "BUY" or "SELL"
+  type           String      // "MARKET", "LIMIT", "BRACKET"
+  quantity       Float
+  price          Float?      // Nullable for market orders
+  filledQuantity Float       @default(0)
+  status         String      // "OPEN", "FILLED", "CANCELLED"
+  botName        String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Trade {
+  id        String   @id @default(cuid())
+  symbol    String
+  pnl       Float    // Profit and Loss for this trade
+  botName   String
+  timestamp DateTime @default(now())
+}
+
+// ===============================================
+// DATA & STRATEGY MODELS
+// ===============================================
+
+model HistoricalCandle {
+  id        Int      @id @default(autoincrement())
+  symbol    String
+  timestamp DateTime
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  volume    Float
+
+  @@unique([symbol, timestamp]) // Prevent duplicate candles
+}
+
+model StrategyConfiguration {
+  id               String   @id @default(cuid())
+  strategyName     String   // e.g., "MACrossStrategy"
+  botName          String
+  symbol           String
+  parameters       Json     // Store strategy params like { "fast_ema": 12, "slow_ema": 26 }
+  isActive         Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // A strategy config can have one backtest result
+  backtestResult   BacktestResult?
+}
+
+model BacktestResult {
+  id                      String    @id @default(cuid())
+  totalPnl                Float
+  winRate                 Float     // Percentage of winning trades (0.0 to 1.0)
+  maxDrawdown             Float     // Maximum drawdown as a percentage
+  sharpeRatio             Float
+  equityCurve             Json      // Store the equity curve as an array of { time, equity }
+  createdAt               DateTime  @default(now())
+  
+  // Relation to the strategy configuration
+  strategyConfigurationId String    @unique
+  strategyConfiguration   StrategyConfiguration @relation(fields: [strategyConfigurationId], references: [id])
+}
+
+// ===============================================
+// SYSTEM HEALTH MODELS
+// ===============================================
+
+model Heartbeat {
+  id        String   @id @default(cuid())
+  service   String   @unique // e.g., "bot-equities", "risk-manager"
+  timestamp DateTime
+  status    String   // "OK", "DEGRADED"
+}
