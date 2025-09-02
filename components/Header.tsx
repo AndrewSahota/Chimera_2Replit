@@ -1,43 +1,119 @@
 
-import React from 'react';
-import { Activity, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  RefreshCw, 
+  Zap, 
+  DollarSign, 
+  TrendingUp,
+  Activity,
+  AlertCircle 
+} from 'lucide-react';
+import { PortfolioStats } from '../types';
 
-interface HeaderProps {
-  lastUpdated?: Date;
-  onRefresh?: () => void;
-}
+export default function Header() {
+  const [portfolioStats, setPortfolioStats] = useState<PortfolioStats>({
+    totalValue: 125430.50,
+    totalPnl: 25430.50,
+    dayChange: 1250.75,
+    dayChangePercent: 2.15,
+    cashBalance: 45000.00,
+    marginUsed: 15000.00
+  });
+  
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [isConnected, setIsConnected] = useState(true);
 
-const Header: React.FC<HeaderProps> = ({ lastUpdated, onRefresh }) => {
+  const handleRefresh = () => {
+    setLastUpdate(new Date());
+    // Simulate data refresh
+    console.log('Refreshing data...');
+  };
+
   return (
-    <header className="bg-[#1c1f26] h-16 flex items-center justify-between px-6 border-b border-gray-700/50">
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center space-x-2">
-          <Activity className="w-6 h-6 text-[#3bc9f4]" />
-          <div>
-            <h1 className="text-lg font-bold text-white">Chimera</h1>
-            <p className="text-xs text-gray-400">Trading Terminal</p>
+    <div className="bg-[#1c1f26] border-b border-gray-700/50 p-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-xl font-bold text-white">Trading Dashboard</h1>
+          <div className="flex items-center space-x-2 text-sm text-gray-400">
+            <span>Last updated: {lastUpdate.toLocaleTimeString()}</span>
+            <button 
+              onClick={handleRefresh}
+              className="p-1 hover:bg-gray-700/50 rounded transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <span className="text-sm text-gray-400">
+              {isConnected ? 'Connected' : 'Disconnected'}
+            </span>
+          </div>
+          
+          <div className="flex items-center space-x-2 bg-green-900/20 text-green-400 px-3 py-1 rounded-full text-sm">
+            <Zap className="w-4 h-4" />
+            <span>Live Trading</span>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center space-x-4">
-        {lastUpdated && (
-          <div className="text-sm text-gray-400">
-            Last updated: {lastUpdated.toLocaleTimeString()}
+      {/* Portfolio Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-[#0e1117] p-4 rounded-lg border border-gray-700/50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-400">Portfolio Value</span>
+            <DollarSign className="w-4 h-4 text-[#3bc9f4]" />
           </div>
-        )}
-        {onRefresh && (
-          <button
-            onClick={onRefresh}
-            className="flex items-center space-x-2 px-3 py-1.5 bg-[#3bc9f4]/20 text-[#3bc9f4] rounded-lg hover:bg-[#3bc9f4]/30 transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span className="text-sm">Refresh</span>
-          </button>
-        )}
-      </div>
-    </header>
-  );
-};
+          <div className="text-2xl font-bold text-white">
+            ${portfolioStats.totalValue.toLocaleString()}
+          </div>
+          <div className="flex items-center space-x-1 mt-1">
+            <div className="w-12 h-1 bg-gradient-to-r from-green-500 to-blue-500 rounded"></div>
+          </div>
+        </div>
 
-export default Header;
+        <div className="bg-[#0e1117] p-4 rounded-lg border border-gray-700/50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-400">Total P&L</span>
+            <TrendingUp className="w-4 h-4 text-green-500" />
+          </div>
+          <div className={`text-2xl font-bold ${portfolioStats.totalPnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {portfolioStats.totalPnl >= 0 ? '+' : ''}${portfolioStats.totalPnl.toLocaleString()}
+          </div>
+          <div className="flex items-center space-x-1 mt-1">
+            <div className={`w-12 h-1 ${portfolioStats.totalPnl >= 0 ? 'bg-green-500' : 'bg-red-500'} rounded`}></div>
+          </div>
+        </div>
+
+        <div className="bg-[#0e1117] p-4 rounded-lg border border-gray-700/50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-400">Day Change</span>
+            <Activity className="w-4 h-4 text-[#3bc9f4]" />
+          </div>
+          <div className={`text-2xl font-bold ${portfolioStats.dayChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {portfolioStats.dayChange >= 0 ? '+' : ''}${portfolioStats.dayChange.toLocaleString()}
+          </div>
+          <div className={`text-sm ${portfolioStats.dayChangePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {portfolioStats.dayChangePercent >= 0 ? '+' : ''}{portfolioStats.dayChangePercent.toFixed(2)}%
+          </div>
+        </div>
+
+        <div className="bg-[#0e1117] p-4 rounded-lg border border-gray-700/50">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-400">Cash/Margin</span>
+            <AlertCircle className="w-4 h-4 text-[#3bc9f4]" />
+          </div>
+          <div className="text-2xl font-bold text-white">
+            ${portfolioStats.cashBalance.toLocaleString()}
+          </div>
+          <div className="text-sm text-gray-400">
+            Margin: ${portfolioStats.marginUsed.toLocaleString()}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

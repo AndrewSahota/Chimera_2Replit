@@ -1,7 +1,4 @@
 
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,105 +14,88 @@ model User {
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Trading related
-  bots      Bot[]
-  orders    Order[]
-  positions Position[]
-
-  @@map("users")
-}
-
-model Bot {
-  id        String    @id @default(cuid())
-  name      String
-  strategy  String
-  status    BotStatus @default(STOPPED)
-  config    Json?
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  orders Order[]
-
-  @@map("bots")
-}
-
-model Order {
-  id             String      @id @default(cuid())
-  symbol         String
-  side           OrderSide
-  type           OrderType
-  quantity       Int
-  price          Float?
-  stopPrice      Float?
-  status         OrderStatus @default(PENDING)
-  filledQuantity Int         @default(0)
-  avgFillPrice   Float?
-  userId         String
-  user           User        @relation(fields: [userId], references: [id])
-  botId          String?
-  bot            Bot?        @relation(fields: [botId], references: [id])
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-
-  @@map("orders")
 }
 
 model Position {
-  id               String   @id @default(cuid())
-  symbol           String
-  quantity         Int
-  avgPrice         Float
-  currentPrice     Float?
-  unrealizedPnl    Float?
-  userId           String
-  user             User     @relation(fields: [userId], references: [id])
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id            String   @id @default(cuid())
+  symbol        String
+  quantity      Int
+  avgPrice      Float
+  currentPrice  Float
+  pnl           Float
+  dayChange     Float
+  dayChangePercent Float
+  botName       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  @@unique([userId, symbol])
-  @@map("positions")
+  @@unique([symbol, botName])
 }
 
-model MarketData {
-  id        String   @id @default(cuid())
-  symbol    String
-  price     Float
-  change    Float
-  volume    Int
-  high      Float
-  low       Float
-  open      Float
-  timestamp DateTime
-  createdAt DateTime @default(now())
-
-  @@unique([symbol, timestamp])
-  @@map("market_data")
+model Trade {
+  id          String    @id @default(cuid())
+  symbol      String
+  side        String    // BUY or SELL
+  quantity    Int
+  price       Float
+  pnl         Float
+  botName     String
+  orderId     String?
+  timestamp   DateTime  @default(now())
+  createdAt   DateTime  @default(now())
 }
 
-enum BotStatus {
-  RUNNING
-  STOPPED
-  ERROR
+model Order {
+  id          String   @id @default(cuid())
+  symbol      String
+  side        String   // BUY or SELL
+  quantity    Int
+  price       Float
+  status      String   // PENDING, FILLED, CANCELLED, REJECTED
+  botName     String?
+  brokerOrderId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
-enum OrderSide {
-  BUY
-  SELL
+model StrategyConfiguration {
+  id          String   @id @default(cuid())
+  name        String
+  symbol      String
+  parameters  Json
+  isActive    Boolean  @default(false)
+  botName     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  backtestResult BacktestResult?
 }
 
-enum OrderType {
-  MARKET
-  LIMIT
-  STOP
-  STOP_LIMIT
+model BacktestResult {
+  id                    String   @id @default(cuid())
+  strategyConfigId      String   @unique
+  strategyConfig        StrategyConfiguration @relation(fields: [strategyConfigId], references: [id])
+  totalReturn           Float
+  sharpeRatio           Float
+  maxDrawdown           Float
+  winRate               Float
+  totalTrades           Int
+  equityCurve           Json
+  createdAt             DateTime @default(now())
 }
 
-enum OrderStatus {
-  PENDING
-  FILLED
-  CANCELLED
-  REJECTED
+model Heartbeat {
+  id          String   @id @default(cuid())
+  service     String   @unique
+  timestamp   DateTime @default(now())
+  status      String
+  metadata    Json?
+}
+
+model AlertLog {
+  id          String   @id @default(cuid())
+  message     String
+  level       String   // INFO, WARN, ERROR, CRITICAL
+  service     String
+  timestamp   DateTime @default(now())
 }

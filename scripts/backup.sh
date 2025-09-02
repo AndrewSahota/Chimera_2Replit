@@ -1,48 +1,59 @@
+
 #!/bin/bash
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
+# Chimera Trading Terminal Backup Script
+# This script backs up the database and important configuration files
 
-# --- Configuration ---
-# It's best practice to source these from a secure .env file
-# For example: source /path/to/your/.env
-DB_USER="chimera_user"
-DB_PASSWORD="chimera_password"
-DB_NAME="chimera_db"
-DB_HOST="localhost" # Assuming you run this from the host machine
-DB_PORT="5432"
-BACKUP_DIR="./backups" # Store backups in project directory
-TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
-BACKUP_FILE="${BACKUP_DIR}/${DB_NAME}_backup_${TIMESTAMP}.sql.gz"
+BACKUP_DIR="backups"
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+BACKUP_FILE="chimera_backup_$TIMESTAMP"
 
-# --- Main Logic ---
+echo "🔄 Starting Chimera Trading Terminal backup..."
 
-echo "Starting database backup for '${DB_NAME}'..."
+# Create backup directory if it doesn't exist
+mkdir -p $BACKUP_DIR
 
+# Database backup
+if [ -n "$DATABASE_URL" ]; then
+    echo "📊 Backing up database..."
+    pg_dump $DATABASE_URL > "$BACKUP_DIR/${BACKUP_FILE}_database.sql"
+    echo "✅ Database backup completed"
+else
+    echo "⚠️ DATABASE_URL not found, skipping database backup"
+fi
 
-# Ensure the backup directory exists
-mkdir -p "${BACKUP_DIR}"
+# Configuration backup
+echo "📁 Backing up configuration files..."
+tar -czf "$BACKUP_DIR/${BACKUP_FILE}_config.tar.gz" \
+    .env* \
+    prisma/ \
+    docker-compose.yml \
+    package.json \
+    tsconfig.json \
+    vite.config.ts 2>/dev/null
 
-# Set the password for pg_dump to use
-export PGPASSWORD=$DB_PASSWORD
+echo "✅ Configuration backup completed"
 
-# Perform the backup using pg_dump
-# -h: host, -p: port, -U: user, -d: database name
-# --format=c: custom, compressed format
-# --blobs: include large objects
-# We pipe the output directly to gzip for compression
-pg_dump -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} --format=c --blobs | gzip > "${BACKUP_FILE}"
+# Application backup
+echo "📦 Backing up application code..."
+tar -czf "$BACKUP_DIR/${BACKUP_FILE}_app.tar.gz" \
+    apps/ \
+    components/ \
+    pages/ \
+    packages/ \
+    scripts/ \
+    types.ts \
+    App.tsx \
+    index.tsx 2>/dev/null
 
-# Unset the password variable for security
-unset PGPASSWORD
+echo "✅ Application backup completed"
 
-echo "✅ Backup successful!"
-echo "File created at: ${BACKUP_FILE}"
+echo "🎉 Backup completed successfully!"
+echo "📁 Backup files created in $BACKUP_DIR/"
+ls -la $BACKUP_DIR/*$TIMESTAMP*
 
-# --- Optional Cleanup ---
-# Remove backups older than 30 days
-echo "Cleaning up old backups (older than 30 days)..."
-find "${BACKUP_DIR}" -type f -name "*.sql.gz" -mtime +30 -delete
-echo "Cleanup complete."
-
-exit 0
+# Clean up old backups (keep last 10)
+echo "🧹 Cleaning up old backups..."
+cd $BACKUP_DIR
+ls -t chimera_backup_* | tail -n +11 | xargs -r rm
+echo "✅ Cleanup completed"
