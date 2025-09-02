@@ -1,58 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project Chimera - Trading Terminal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'chimera-dark': '#131722',
-              'chimera-lightdark': '#1e222d',
-              'chimera-grey': '#2a2e39',
-              'chimera-lightgrey': '#4f5966',
-              'chimera-blue': '#2962ff',
-              'chimera-green': '#26a69a',
-              'chimera-red': '#ef5350',
-            },
-          },
-        },
-      }
-    </script>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://aistudiocdn.com/react@^19.1.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
-    "recharts": "https://aistudiocdn.com/recharts@^3.1.2",
-    "crypto": "https://aistudiocdn.com/crypto@^1.0.1",
-    "@nestjs/common": "https://aistudiocdn.com/@nestjs/common@^11.1.6",
-    "axios": "https://aistudiocdn.com/axios@^1.11.0",
-    "ws": "https://aistudiocdn.com/ws@^8.18.3",
-    "zustand": "https://aistudiocdn.com/zustand@^5.0.8",
-    "@nestjs/schedule": "https://aistudiocdn.com/@nestjs/schedule@^6.0.0",
-    "@nestjs/websockets": "https://aistudiocdn.com/@nestjs/websockets@^11.1.6",
-    "events": "https://aistudiocdn.com/events@^3.3.0",
-    "@nestjs/config": "https://aistudiocdn.com/@nestjs/config@^4.0.2",
-    "zod": "https://aistudiocdn.com/zod@^4.1.5",
-    "packages/": "https://aistudiocdn.com/packages@^0.0.8/",
-    "@willsoto/nestjs-prometheus": "https://aistudiocdn.com/@willsoto/nestjs-prometheus@^6.0.2"
-  }
-}
-</script>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chimera Trading Terminal</title>
   <style>
     :root {
-      --chimera-dark: #0d1117;
-      --chimera-lightdark: #161b22;
+      --chimera-dark: #0e1117;
+      --chimera-lightdark: #1c1f26;
       --chimera-grey: #21262d;
       --chimera-lightgrey: #8b949e;
-      --chimera-blue: #2962ff;
-      --chimera-green: #26a69a;
-      --chimera-red: #ef5350;
+      --chimera-blue: #3bc9f4;
+      --chimera-green: #2ecc71;
+      --chimera-red: #e74c3c;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background-color: var(--chimera-dark);
+      color: white;
     }
 
     .bg-chimera-dark { background-color: var(--chimera-dark); }
@@ -64,8 +36,8 @@
     .bg-chimera-red { background-color: var(--chimera-red); }
   </style>
 </head>
-  <body class="bg-chimera-dark text-gray-200 font-sans">
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
+<body>
+  <div id="root"></div>
+  <script type="module" src="./index.tsx"></script>
+</body>
 </html>

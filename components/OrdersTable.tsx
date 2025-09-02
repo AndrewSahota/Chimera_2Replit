@@ -1,66 +1,123 @@
 
-import React from 'react';
-import { Order, OrderSide, OrderStatus } from '../types';
+import React, { useState } from 'react';
+import { Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Order, OrderStatus } from '../types';
 
-interface OrdersTableProps {
-  orders: Order[];
-}
+export default function OrdersTable() {
+  const [orders] = useState<Order[]>([
+    {
+      id: '1',
+      symbol: 'AAPL',
+      side: 'BUY',
+      type: 'LIMIT',
+      quantity: 100,
+      price: 150.00,
+      status: 'PENDING',
+      timestamp: new Date(),
+      filledQuantity: 0
+    },
+    {
+      id: '2',
+      symbol: 'GOOGL',
+      side: 'SELL',
+      type: 'MARKET',
+      quantity: 50,
+      status: 'FILLED',
+      timestamp: new Date(Date.now() - 300000),
+      filledQuantity: 50,
+      avgFillPrice: 2685.50
+    }
+  ]);
 
-const StatusBadge: React.FC<{status: OrderStatus}> = ({ status }) => {
-    const color = {
-        [OrderStatus.OPEN]: 'bg-blue-500/20 text-blue-300',
-        [OrderStatus.FILLED]: 'bg-green-500/20 text-green-300',
-        [OrderStatus.PARTIALLY_FILLED]: 'bg-yellow-500/20 text-yellow-300',
-        [OrderStatus.CANCELLED]: 'bg-gray-500/20 text-gray-400',
-    }[status];
+  const getStatusIcon = (status: OrderStatus) => {
+    switch (status) {
+      case 'PENDING':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      case 'FILLED':
+        return <CheckCircle className="w-4 h-4 text-[#2ecc71]" />;
+      case 'CANCELLED':
+        return <XCircle className="w-4 h-4 text-gray-500" />;
+      case 'REJECTED':
+        return <AlertCircle className="w-4 h-4 text-[#e74c3c]" />;
+      default:
+        return null;
+    }
+  };
 
-    return (
-        <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${color}`}>{status}</span>
-    )
-}
-
-const OrdersTable: React.FC<OrdersTableProps> = ({ orders }) => {
   return (
-    <div className="h-full flex flex-col">
-      <h3 className="text-md font-semibold mb-2 px-1">Orders</h3>
-      <div className="overflow-y-auto flex-grow">
-        <table className="w-full text-left text-xs">
-          <thead className="sticky top-0 bg-chimera-lightdark">
-            <tr className="text-chimera-lightgrey border-b border-chimera-grey">
-              <th className="p-2 font-medium">Symbol</th>
-              <th className="p-2 font-medium">Bot</th>
-              <th className="p-2 font-medium">Side</th>
-              <th className="p-2 font-medium text-right">Quantity</th>
-              <th className="p-2 font-medium text-right">Price</th>
-              <th className="p-2 font-medium text-center">Status</th>
+    <div className="bg-[#1c1f26] rounded-lg border border-gray-700/50">
+      <div className="p-4 border-b border-gray-700/50">
+        <h3 className="text-lg font-semibold text-white">Recent Orders</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-700/50">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Symbol
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Side
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Type
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Quantity
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Price
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Time
+              </th>
             </tr>
           </thead>
           <tbody>
-            {orders.length === 0 ? (
-                <tr>
-                    <td colSpan={6} className="text-center py-4 text-chimera-lightgrey">No orders</td>
-                </tr>
-            ) : (
-                orders.map((order) => (
-                    <tr key={order.id} className="border-b border-chimera-grey/50 hover:bg-chimera-grey/40 font-mono">
-                    <td className="p-2 font-semibold">{order.symbol}</td>
-                    <td className="p-2 text-chimera-lightgrey">{order.botName}</td>
-                    <td className={`p-2 font-bold ${order.side === OrderSide.BUY ? 'text-chimera-green' : 'text-chimera-red'}`}>
-                        {order.side}
-                    </td>
-                    <td className="p-2 text-right">{order.quantity.toFixed(4)}</td>
-                    <td className="p-2 text-right">{order.price ? `$${order.price.toFixed(2)}` : 'Market'}</td>
-                    <td className="p-2 text-center">
-                        <StatusBadge status={order.status}/>
-                    </td>
-                    </tr>
-                ))
-            )}
+            {orders.map((order) => (
+              <tr key={order.id} className="border-b border-gray-700/30 hover:bg-gray-700/20">
+                <td className="px-4 py-4">
+                  <div className="flex items-center space-x-2">
+                    {getStatusIcon(order.status)}
+                    <span className="text-sm text-white">{order.status}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-4">
+                  <span className="text-sm font-medium text-white">{order.symbol}</span>
+                </td>
+                <td className="px-4 py-4">
+                  <span className={`text-sm font-medium ${
+                    order.side === 'BUY' ? 'text-[#2ecc71]' : 'text-[#e74c3c]'
+                  }`}>
+                    {order.side}
+                  </span>
+                </td>
+                <td className="px-4 py-4">
+                  <span className="text-sm text-gray-300">{order.type}</span>
+                </td>
+                <td className="px-4 py-4 text-right">
+                  <span className="text-sm font-mono text-white">
+                    {order.filledQuantity}/{order.quantity}
+                  </span>
+                </td>
+                <td className="px-4 py-4 text-right">
+                  <span className="text-sm font-mono text-white">
+                    ${order.avgFillPrice || order.price || '-'}
+                  </span>
+                </td>
+                <td className="px-4 py-4">
+                  <span className="text-sm text-gray-400">
+                    {order.timestamp.toLocaleTimeString()}
+                  </span>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
     </div>
   );
-};
-
-export default OrdersTable;
+}

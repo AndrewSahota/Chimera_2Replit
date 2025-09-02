@@ -1,78 +1,72 @@
 
 import React from 'react';
-import { OrderBookLevel } from '../types';
 
-interface OrderBookProps {
-  bids: OrderBookLevel[];
-  asks: OrderBookLevel[];
-  lastPrice: number;
+interface OrderBookEntry {
+  price: number;
+  size: number;
+  total: number;
 }
 
-const OrderBookRow: React.FC<{ level: OrderBookLevel, type: 'bid' | 'ask', maxTotal: number }> = ({ level, type, maxTotal }) => {
-  const percentage = maxTotal > 0 ? (level.total! / maxTotal) * 100 : 0;
-  const bgColorClass = type === 'bid' ? `bg-chimera-green/20` : `bg-chimera-red/20`;
-  const textColorClass = type === 'bid' ? 'text-chimera-green' : 'text-chimera-red';
+export default function OrderBook() {
+  // Mock data - replace with real WebSocket feed
+  const bids: OrderBookEntry[] = [
+    { price: 155.25, size: 100, total: 100 },
+    { price: 155.20, size: 250, total: 350 },
+    { price: 155.15, size: 150, total: 500 },
+    { price: 155.10, size: 300, total: 800 },
+    { price: 155.05, size: 200, total: 1000 }
+  ];
+
+  const asks: OrderBookEntry[] = [
+    { price: 155.35, size: 150, total: 150 },
+    { price: 155.40, size: 200, total: 350 },
+    { price: 155.45, size: 100, total: 450 },
+    { price: 155.50, size: 300, total: 750 },
+    { price: 155.55, size: 250, total: 1000 }
+  ];
+
+  const maxTotal = Math.max(...bids.map(b => b.total), ...asks.map(a => a.total));
 
   return (
-    <div className="relative flex justify-between items-center text-xs font-mono p-1 hover:bg-chimera-grey/50">
-      <div
-        className={`absolute top-0 bottom-0 ${type === 'bid' ? 'right-0' : 'left-0'} ${bgColorClass}`}
-        style={{ width: `${percentage}%` }}
-      />
-      <span className={textColorClass}>{level.price.toFixed(2)}</span>
-      <span>{level.size.toFixed(4)}</span>
-      <span>{level.total!.toFixed(4)}</span>
-    </div>
-  );
-};
-
-
-const OrderBook: React.FC<OrderBookProps> = ({ bids, asks, lastPrice }) => {
-  let bidTotal = 0;
-  const bidsWithTotal = bids.map(bid => {
-    bidTotal += bid.size;
-    return { ...bid, total: bidTotal };
-  });
-
-  let askTotal = 0;
-  const asksWithTotal = asks.map(ask => {
-    askTotal += ask.size;
-    return { ...ask, total: askTotal };
-  });
-
-  const maxTotal = Math.max(bidTotal, askTotal);
-
-  return (
-    <div className="flex flex-col h-full">
-      <h3 className="text-md font-semibold mb-2 p-2 border-b border-chimera-grey">Order Book</h3>
-      <div className="grid grid-cols-3 text-xs text-chimera-lightgrey px-1 py-2">
-        <span>Price (USD)</span>
-        <span className="text-right">Size (BTC)</span>
-        <span className="text-right">Total (BTC)</span>
-      </div>
-      <div className="flex-grow overflow-y-auto pr-1">
+    <div className="bg-[#1c1f26] rounded-lg border border-gray-700/50 p-4">
+      <h3 className="text-lg font-semibold text-white mb-4">Order Book</h3>
+      
+      <div className="space-y-2">
         {/* Asks */}
-        <div className="flex flex-col-reverse">
-            {asksWithTotal.slice(0, 15).map(ask => (
-                <OrderBookRow key={ask.price} level={ask} type="ask" maxTotal={maxTotal} />
-            ))}
+        <div className="space-y-1">
+          {asks.reverse().map((ask, index) => (
+            <div key={index} className="relative flex justify-between text-xs font-mono">
+              <div 
+                className="absolute left-0 top-0 h-full bg-[#e74c3c]/20 rounded"
+                style={{ width: `${(ask.total / maxTotal) * 100}%` }}
+              />
+              <span className="relative z-10 text-[#e74c3c]">{ask.price.toFixed(2)}</span>
+              <span className="relative z-10 text-gray-300">{ask.size}</span>
+            </div>
+          ))}
         </div>
 
-        <div className="py-2 text-center text-lg font-bold border-t border-b border-chimera-grey my-1">
-            <span className={lastPrice > (bids[0]?.price || 0) ? 'text-chimera-green' : 'text-chimera-red'}>
-                {lastPrice.toFixed(2)}
-            </span>
+        {/* Spread */}
+        <div className="border-y border-gray-600 py-2 text-center">
+          <span className="text-sm text-gray-400">
+            Spread: ${(asks[0]?.price - bids[0]?.price || 0).toFixed(2)}
+          </span>
         </div>
 
         {/* Bids */}
-        <div>
-            {bidsWithTotal.slice(0, 15).map(bid => (
-                <OrderBookRow key={bid.price} level={bid} type="bid" maxTotal={maxTotal} />
-            ))}
+        <div className="space-y-1">
+          {bids.map((bid, index) => (
+            <div key={index} className="relative flex justify-between text-xs font-mono">
+              <div 
+                className="absolute left-0 top-0 h-full bg-[#2ecc71]/20 rounded"
+                style={{ width: `${(bid.total / maxTotal) * 100}%` }}
+              />
+              <span className="relative z-10 text-[#2ecc71]">{bid.price.toFixed(2)}</span>
+              <span className="relative z-10 text-gray-300">{bid.size}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
-};
-
-export default OrderBook;
+}

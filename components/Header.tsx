@@ -1,52 +1,40 @@
 
 import React from 'react';
-
-type Page = 'Terminal' | 'Analytics' | 'Strategies';
+import { Activity, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
-  status: 'Connected' | 'Connecting' | 'Disconnected';
-  activePage: Page;
-  onPageChange: (page: Page) => void;
+  lastUpdated?: Date;
+  onRefresh?: () => void;
 }
 
-const StatusIndicator: React.FC<{ status: HeaderProps['status'] }> = ({ status }) => {
-  const color = status === 'Connected' ? 'bg-chimera-green' : status === 'Connecting' ? 'bg-yellow-500' : 'bg-chimera-red';
+const Header: React.FC<HeaderProps> = ({ lastUpdated, onRefresh }) => {
   return (
-    <div className="flex items-center space-x-2">
-      <span className={`h-2.5 w-2.5 rounded-full ${color}`}></span>
-      <span className="text-sm font-medium">{status}</span>
-    </div>
-  );
-};
-
-const NavItem: React.FC<{ page: Page; activePage: Page; onPageChange: (page: Page) => void; children: React.ReactNode }> = ({ page, activePage, onPageChange, children }) => {
-    const isActive = page === activePage;
-    return (
-        <button 
-            onClick={() => onPageChange(page)}
-            className={`px-4 py-2 text-sm font-semibold rounded-md ${isActive ? 'bg-chimera-blue text-white' : 'text-gray-300 hover:bg-chimera-grey'}`}
-        >
-            {children}
-        </button>
-    )
-}
-
-const Header: React.FC<HeaderProps> = ({ status, activePage, onPageChange }) => {
-  return (
-    <header className="bg-chimera-lightdark h-16 flex items-center justify-between px-6 border-b border-chimera-grey">
+    <header className="bg-[#1c1f26] h-16 flex items-center justify-between px-6 border-b border-gray-700/50">
       <div className="flex items-center space-x-4">
-         <svg xmlns="http://www.w.org/2000/svg" className="h-8 w-8 text-chimera-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
-        <h1 className="text-xl font-bold text-gray-100 hidden md:block">Project Chimera</h1>
+        <div className="flex items-center space-x-2">
+          <Activity className="w-6 h-6 text-[#3bc9f4]" />
+          <div>
+            <h1 className="text-lg font-bold text-white">Chimera</h1>
+            <p className="text-xs text-gray-400">Trading Terminal</p>
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <NavItem page="Terminal" activePage={activePage} onPageChange={onPageChange}>Terminal</NavItem>
-        <NavItem page="Analytics" activePage={activePage} onPageChange={onPageChange}>Analytics</NavItem>
-        <NavItem page="Strategies" activePage={activePage} onPageChange={onPageChange}>Strategies</NavItem>
-      </div>
-
-      <div>
-        <StatusIndicator status={status} />
+      <div className="flex items-center space-x-4">
+        {lastUpdated && (
+          <div className="text-sm text-gray-400">
+            Last updated: {lastUpdated.toLocaleTimeString()}
+          </div>
+        )}
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            className="flex items-center space-x-2 px-3 py-1.5 bg-[#3bc9f4]/20 text-[#3bc9f4] rounded-lg hover:bg-[#3bc9f4]/30 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="text-sm">Refresh</span>
+          </button>
+        )}
       </div>
     </header>
   );

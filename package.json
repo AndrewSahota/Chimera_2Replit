@@ -19,18 +19,16 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.8.0",
-    "crypto": "^1.0.1",
-    "@nestjs/common": "^11.1.6",
     "axios": "^1.6.0",
     "ws": "^8.18.3",
     "zustand": "^4.4.7",
+    "@nestjs/common": "^11.1.6",
     "@nestjs/schedule": "^6.0.0",
     "@nestjs/websockets": "^11.1.6",
-    "events": "^3.3.0",
     "@nestjs/config": "^4.0.2",
-    "zod": "^4.1.5",
-    "packages": "^0.0.8",
-    "@willsoto/nestjs-prometheus": "^6.0.2"
+    "zod": "^3.22.4",
+    "@willsoto/nestjs-prometheus": "^6.0.2",
+    "lucide-react": "^0.263.1"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

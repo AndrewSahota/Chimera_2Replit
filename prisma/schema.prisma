@@ -1,108 +1,121 @@
+
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Defines the database connection. We're using PostgreSQL.
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL") // This URL will be provided by Docker Compose
-}
-
-// Configures the Prisma Client generator.
 generator client {
   provider = "prisma-client-js"
 }
 
-// ===============================================
-// CORE TRADING MODELS
-// ===============================================
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-model Position {
-  id             String   @id @default(cuid())
-  symbol         String
-  quantity       Float
-  averagePrice   Float
-  unrealizedPnl  Float    @default(0)
-  botName        String   // Which bot owns this position
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@unique([botName, symbol]) // A bot can only have one position per symbol
+  // Trading related
+  bots      Bot[]
+  orders    Order[]
+  positions Position[]
+
+  @@map("users")
+}
+
+model Bot {
+  id        String    @id @default(cuid())
+  name      String
+  strategy  String
+  status    BotStatus @default(STOPPED)
+  config    Json?
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  orders Order[]
+
+  @@map("bots")
 }
 
 model Order {
   id             String      @id @default(cuid())
   symbol         String
-  side           String      // "BUY" or "SELL"
-  type           String      // "MARKET", "LIMIT", "BRACKET"
-  quantity       Float
-  price          Float?      // Nullable for market orders
-  filledQuantity Float       @default(0)
-  status         String      // "OPEN", "FILLED", "CANCELLED"
-  botName        String
+  side           OrderSide
+  type           OrderType
+  quantity       Int
+  price          Float?
+  stopPrice      Float?
+  status         OrderStatus @default(PENDING)
+  filledQuantity Int         @default(0)
+  avgFillPrice   Float?
+  userId         String
+  user           User        @relation(fields: [userId], references: [id])
+  botId          String?
+  bot            Bot?        @relation(fields: [botId], references: [id])
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+
+  @@map("orders")
 }
 
-model Trade {
-  id        String   @id @default(cuid())
-  symbol    String
-  pnl       Float    // Profit and Loss for this trade
-  botName   String
-  timestamp DateTime @default(now())
-}
-
-// ===============================================
-// DATA & STRATEGY MODELS
-// ===============================================
-
-model HistoricalCandle {
-  id        Int      @id @default(autoincrement())
-  symbol    String
-  timestamp DateTime
-  open      Float
-  high      Float
-  low       Float
-  close     Float
-  volume    Float
-
-  @@unique([symbol, timestamp]) // Prevent duplicate candles
-}
-
-model StrategyConfiguration {
+model Position {
   id               String   @id @default(cuid())
-  strategyName     String   // e.g., "MACrossStrategy"
-  botName          String
   symbol           String
-  parameters       Json     // Store strategy params like { "fast_ema": 12, "slow_ema": 26 }
-  isActive         Boolean  @default(false)
+  quantity         Int
+  avgPrice         Float
+  currentPrice     Float?
+  unrealizedPnl    Float?
+  userId           String
+  user             User     @relation(fields: [userId], references: [id])
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  
-  // A strategy config can have one backtest result
-  backtestResult   BacktestResult?
+
+  @@unique([userId, symbol])
+  @@map("positions")
 }
 
-model BacktestResult {
-  id                      String    @id @default(cuid())
-  totalPnl                Float
-  winRate                 Float     // Percentage of winning trades (0.0 to 1.0)
-  maxDrawdown             Float     // Maximum drawdown as a percentage
-  sharpeRatio             Float
-  equityCurve             Json      // Store the equity curve as an array of { time, equity }
-  createdAt               DateTime  @default(now())
-  
-  // Relation to the strategy configuration
-  strategyConfigurationId String    @unique
-  strategyConfiguration   StrategyConfiguration @relation(fields: [strategyConfigurationId], references: [id])
-}
-
-// ===============================================
-// SYSTEM HEALTH MODELS
-// ===============================================
-
-model Heartbeat {
+model MarketData {
   id        String   @id @default(cuid())
-  service   String   @unique // e.g., "bot-equities", "risk-manager"
+  symbol    String
+  price     Float
+  change    Float
+  volume    Int
+  high      Float
+  low       Float
+  open      Float
   timestamp DateTime
-  status    String   // "OK", "DEGRADED"
+  createdAt DateTime @default(now())
+
+  @@unique([symbol, timestamp])
+  @@map("market_data")
+}
+
+enum BotStatus {
+  RUNNING
+  STOPPED
+  ERROR
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderType {
+  MARKET
+  LIMIT
+  STOP
+  STOP_LIMIT
+}
+
+enum OrderStatus {
+  PENDING
+  FILLED
+  CANCELLED
+  REJECTED
 }

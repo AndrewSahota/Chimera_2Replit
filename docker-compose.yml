@@ -1,99 +1,30 @@
 version: '3.8'
 
 services:
-  # The central database for all services
-  database:
-    image: postgres:14-alpine
-    container_name: chimera_db
-    restart: always
+  postgres:
+    image: postgres:15
     environment:
+      POSTGRES_DB: chimera_db
       POSTGRES_USER: chimera_user
       POSTGRES_PASSWORD: chimera_password
-      POSTGRES_DB: chimera_db
     ports:
-      - "5432:5432" # Expose DB port to the host for direct access/debugging
+      - "5432:5432"
     volumes:
-      - chimera_db_data:/var/lib/postgresql/data
-    networks:
-      - chimera_net
+      - postgres_data:/var/lib/postgresql/data
 
-  # The message bus for inter-service communication
-  message_bus:
-    image: rabbitmq:3.9-management-alpine
-    container_name: chimera_mq
-    restart: always
+  redis:
+    image: redis:7-alpine
     ports:
-      - "5672:5672"   # AMQP port for services
-      - "15672:15672" # Management UI for debugging
-    networks:
-      - chimera_net
+      - "6379:6379"
 
-  # The main backend API that serves the UI and handles WebSocket connections
-  terminal_api:
-    build:
-      context: .
-      dockerfile: apps/terminal-api/Dockerfile # Assumes you have a Dockerfile here
-    container_name: chimera_terminal_api
-    restart: always
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
     ports:
-      - "3000:3000" # REST API port
-      - "8081:8081" # WebSocket port
-    environment:
-      - DATABASE_URL=postgresql://chimera_user:chimera_password@database:5432/chimera_db
-      - RABBITMQ_URL=amqp://guest:guest@message_bus:5672
-    depends_on:
-      - database
-      - message_bus
-    networks:
-      - chimera_net
+      - "5672:5672"
+      - "15672:15672"
 
-  # An example trading bot service
-  bot_equities:
-    build:
-      context: .
-      dockerfile: apps/bot-equities/Dockerfile # Assumes you have a Dockerfile here
-    container_name: chimera_bot_equities
-    restart: always
-    environment:
-      - DATABASE_URL=postgresql://chimera_user:chimera_password@database:5432/chimera_db
-      - RABBITMQ_URL=amqp://guest:guest@message_bus:5672
-      - BROKER_MODE=sim # 'sim', 'paper', or 'live'
-      # Add broker-specific API keys here
-      # - ZERODHA_API_KEY=your_key
-      # - ZERODHA_ACCESS_TOKEN=your_token
-    depends_on:
-      - database
-      - message_bus
-    networks:
-      - chimera_net
-  
-  # The risk manager service
-  risk_manager:
-    build:
-      context: .
-      dockerfile: apps/risk-manager/Dockerfile # Assumes you have a Dockerfile here
-    container_name: chimera_risk_manager
-    restart: always
-    environment:
-      - DATABASE_URL=postgresql://chimera_user:chimera_password@database:5432/chimera_db
-      - RABBITMQ_URL=amqp://guest:guest@message_bus:5672
-      # Add alerting service keys here
-      # - TELEGRAM_BOT_TOKEN=your_token
-      # - TELEGRAM_CHAT_ID=your_chat_id
-    depends_on:
-      - database
-      - message_bus
-    networks:
-      - chimera_net
-
-# Define the network for services to communicate
-networks:
-  chimera_net:
-    driver: bridge
-
-# Define the volume to persist database data
 volumes:
-  chimera_db_data:
-    driver: local
-
-
+  postgres_data:

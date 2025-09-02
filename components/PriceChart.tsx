@@ -1,73 +1,71 @@
 
-import React from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Tick } from '../types';
+import React, { useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-interface PriceChartProps {
-  data: Tick[];
-}
-
-const CustomTooltip: React.FC<any> = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-chimera-grey p-2 border border-chimera-lightgrey rounded-md text-sm">
-        <p className="label">{`Time: ${new Date(label).toLocaleTimeString()}`}</p>
-        <p className="intro">{`Price: $${payload[0].value.toFixed(2)}`}</p>
-      </div>
-    );
-  }
-  return null;
-};
-
-
-const PriceChart: React.FC<PriceChartProps> = ({ data }) => {
-  const chartData = data.map(tick => ({
-    time: tick.timestamp.getTime(),
-    price: tick.price
-  }));
-
-  const lastPrice = chartData.length > 0 ? chartData[chartData.length - 1].price : 0;
-  const firstPrice = chartData.length > 0 ? chartData[0].price : 0;
-  const gradientColor = lastPrice >= firstPrice ? '#26a69a' : '#ef5350';
+export default function PriceChart() {
+  const [selectedSymbol, setSelectedSymbol] = useState('AAPL');
+  
+  // Mock data - replace with real API
+  const chartData = [
+    { time: '09:30', price: 150.25 },
+    { time: '10:00', price: 151.50 },
+    { time: '10:30', price: 150.75 },
+    { time: '11:00', price: 152.30 },
+    { time: '11:30', price: 153.10 },
+    { time: '12:00', price: 152.85 },
+    { time: '12:30', price: 154.20 },
+    { time: '13:00', price: 155.30 }
+  ];
 
   return (
-    <div className="w-full h-full flex flex-col">
-       <div className="p-2">
-         <h2 className="text-lg font-semibold">BTC/USD Chart</h2>
-         <p className="text-2xl font-mono" style={{color: gradientColor}}>${lastPrice.toFixed(2)}</p>
-       </div>
-       <div className="flex-grow">
+    <div className="bg-[#1c1f26] rounded-lg border border-gray-700/50 p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-white">Price Chart</h3>
+        <select
+          value={selectedSymbol}
+          onChange={(e) => setSelectedSymbol(e.target.value)}
+          className="bg-[#0e1117] text-white px-3 py-1 rounded border border-gray-600 focus:border-[#3bc9f4] focus:outline-none"
+        >
+          <option value="AAPL">AAPL</option>
+          <option value="GOOGL">GOOGL</option>
+          <option value="MSFT">MSFT</option>
+        </select>
+      </div>
+      
+      <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-            <defs>
-              <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={gradientColor} stopOpacity={0.8}/>
-                <stop offset="95%" stopColor={gradientColor} stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#2a2e39" />
+          <LineChart data={chartData}>
             <XAxis 
               dataKey="time" 
-              tickFormatter={(time) => new Date(time).toLocaleTimeString()} 
-              stroke="#4f5966"
-              tick={{ fill: '#d1d5db', fontSize: 12 }}
-              dy={10}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#8b949e', fontSize: 12 }}
             />
             <YAxis 
-              dataKey="price" 
-              domain={['dataMin - 100', 'dataMax + 100']}
-              orientation="right"
-              stroke="#4f5966"
-              tickFormatter={(price) => `$${price.toFixed(0)}`}
-              tick={{ fill: '#d1d5db', fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#8b949e', fontSize: 12 }}
+              domain={['dataMin - 0.5', 'dataMax + 0.5']}
             />
-            <Tooltip content={<CustomTooltip />} />
-            <Area type="monotone" dataKey="price" stroke={gradientColor} fillOpacity={1} fill="url(#colorPrice)" strokeWidth={2} />
-          </AreaChart>
+            <Tooltip 
+              contentStyle={{
+                backgroundColor: '#1c1f26',
+                border: '1px solid #3bc9f4',
+                borderRadius: '8px',
+                color: 'white'
+              }}
+            />
+            <Line 
+              type="monotone" 
+              dataKey="price" 
+              stroke="#3bc9f4" 
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 4, fill: '#3bc9f4' }}
+            />
+          </LineChart>
         </ResponsiveContainer>
-       </div>
+      </div>
     </div>
   );
-};
-
-export default PriceChart;
+}

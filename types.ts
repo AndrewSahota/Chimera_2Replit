@@ -1,72 +1,73 @@
 
-export interface Tick {
-  symbol: string;
-  price: number;
-  timestamp: Date;
-}
+export type OrderSide = 'BUY' | 'SELL';
+export type OrderType = 'MARKET' | 'LIMIT' | 'STOP' | 'STOP_LIMIT';
+export type OrderStatus = 'PENDING' | 'FILLED' | 'CANCELLED' | 'REJECTED';
+export type TradingMode = 'sim' | 'paper' | 'live';
 
 export interface Order {
   id: string;
   symbol: string;
   side: OrderSide;
-  type: OrderType.MARKET | OrderType.LIMIT;
+  type: OrderType;
   quantity: number;
   price?: number;
-  filledQuantity: number;
+  stopPrice?: number;
   status: OrderStatus;
-  createdAt: Date;
+  timestamp: Date;
+  filledQuantity?: number;
+  avgFillPrice?: number;
 }
 
 export interface Position {
   symbol: string;
+  company: string;
   quantity: number;
   avgPrice: number;
   currentPrice: number;
-  pnl: number;
+  unrealizedPnl: number;
+  unrealizedPnlPercent: number;
+  dayChange: number;
+  dayChangePercent: number;
+  logo?: string;
+  miniChart?: number[];
 }
 
-export enum OrderSide {
-  BUY = 'BUY',
-  SELL = 'SELL'
-}
-
-export enum OrderType {
-  MARKET = 'MARKET',
-  LIMIT = 'LIMIT',
-  BRACKET = 'BRACKET'
-}
-
-export enum OrderStatus {
-  OPEN = 'OPEN',
-  FILLED = 'FILLED',
-  CANCELLED = 'CANCELLED',
-  REJECTED = 'REJECTED'
-}
-
-export interface PlaceOrderParams {
+export interface Trade {
+  id: string;
   symbol: string;
-  side: string;
-  type: string;
+  side: OrderSide;
   quantity: number;
-  price?: number;
+  price: number;
+  timestamp: Date;
+  orderId: string;
 }
 
-export interface BracketOrderParams extends PlaceOrderParams {
-  takeProfit: number;
-  stopLoss: number;
+export interface Portfolio {
+  totalValue: number;
+  cash: number;
+  unrealizedPnl: number;
+  dayChange: number;
+  dayChangePercent: number;
 }
 
-export interface IBroker {
-  connect(): Promise<void>;
-  placeOrder(params: PlaceOrderParams): Promise<Order | Order[]>;
-  cancelOrder(orderId: string): Promise<boolean>;
-  getPositions(): Promise<Position[]>;
-  getOpenOrders(): Promise<Order[]>;
+export interface BotStatus {
+  id: string;
+  name: string;
+  status: 'RUNNING' | 'STOPPED' | 'ERROR';
+  strategy: string;
+  pnl: number;
+  positions: Position[];
+  lastUpdate: Date;
 }
 
-export interface IDataFeed {
-  connect(): Promise<void>;
-  subscribe(symbols: string[]): Promise<void>;
-  on(event: string, listener: Function): void;
-  emit(event: string, ...args: any[]): void;
+export interface MarketData {
+  symbol: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  high: number;
+  low: number;
+  open: number;
+  timestamp: Date;
 }

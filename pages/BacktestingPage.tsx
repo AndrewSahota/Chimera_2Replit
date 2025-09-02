@@ -1,83 +1,113 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { Play, BarChart3, TrendingUp, Calendar } from 'lucide-react';
 
-const mockHistory = [
-    { id: 'job-123', strategy: 'MACrossStrategy', symbol: 'INFY', range: '2023-01-01 - 2024-01-01', status: 'Completed', pnl: 15230.50, sharpe: 1.85 },
-    { id: 'job-124', strategy: 'RSI Momentum', symbol: 'BTC/USD', range: '2022-06-01 - 2023-06-01', status: 'Completed', pnl: -2340.10, sharpe: -0.42 },
-    { id: 'job-125', strategy: 'Mean Reversion', symbol: 'EUR/USD', range: '2023-10-01 - 2024-01-01', status: 'Running', pnl: null, sharpe: null },
-];
+export default function BacktestingPage() {
+  const [strategy, setStrategy] = useState('moving-average');
+  const [startDate, setStartDate] = useState('2023-01-01');
+  const [endDate, setEndDate] = useState('2024-01-01');
+  const [initialCapital, setInitialCapital] = useState('100000');
 
-const BacktestingPage: React.FC = () => {
   return (
-    <div className="p-4 space-y-4">
-      <h1 className="text-2xl font-bold">Backtesting Hub</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-white">Backtesting</h1>
+        <button className="flex items-center space-x-2 bg-[#3bc9f4] text-white px-4 py-2 rounded-lg hover:bg-[#3bc9f4]/80 transition-colors">
+          <Play className="w-4 h-4" />
+          <span>Run Backtest</span>
+        </button>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-1 bg-chimera-lightdark rounded-lg p-4">
-          <h3 className="text-lg font-semibold mb-4">Submit a Backtest Job</h3>
-          <form className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Configuration Panel */}
+        <div className="bg-[#1c1f26] rounded-lg border border-gray-700/50 p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Configuration</h3>
+          
+          <div className="space-y-4">
             <div>
-              <label className="text-sm text-chimera-lightgrey">Strategy</label>
-              <select className="w-full bg-chimera-grey p-2 rounded-md mt-1">
-                <option>MACrossStrategy</option>
-                <option>RSI Momentum</option>
-                <option>Mean Reversion</option>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Strategy</label>
+              <select
+                value={strategy}
+                onChange={(e) => setStrategy(e.target.value)}
+                className="w-full bg-[#0e1117] text-white px-3 py-2 rounded border border-gray-600 focus:border-[#3bc9f4] focus:outline-none"
+              >
+                <option value="moving-average">Moving Average Crossover</option>
+                <option value="rsi">RSI Strategy</option>
+                <option value="macd">MACD Strategy</option>
+                <option value="bollinger">Bollinger Bands</option>
               </select>
             </div>
+
             <div>
-              <label className="text-sm text-chimera-lightgrey">Symbol</label>
-              <input type="text" placeholder="e.g., INFY" className="w-full bg-chimera-grey p-2 rounded-md mt-1" />
+              <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full bg-[#0e1117] text-white px-3 py-2 rounded border border-gray-600 focus:border-[#3bc9f4] focus:outline-none"
+              />
             </div>
-             <div>
-              <label className="text-sm text-chimera-lightgrey">Date Range</label>
-              <div className="flex space-x-2 mt-1">
-                <input type="date" className="w-full bg-chimera-grey p-2 rounded-md" />
-                <input type="date" className="w-full bg-chimera-grey p-2 rounded-md" />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">End Date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full bg-[#0e1117] text-white px-3 py-2 rounded border border-gray-600 focus:border-[#3bc9f4] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Initial Capital</label>
+              <input
+                type="number"
+                value={initialCapital}
+                onChange={(e) => setInitialCapital(e.target.value)}
+                className="w-full bg-[#0e1117] text-white px-3 py-2 rounded border border-gray-600 focus:border-[#3bc9f4] focus:outline-none"
+                placeholder="100000"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Metrics */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { title: 'Total Return', value: '+15.7%', icon: TrendingUp, color: 'text-[#2ecc71]' },
+              { title: 'Sharpe Ratio', value: '1.42', icon: BarChart3, color: 'text-[#3bc9f4]' },
+              { title: 'Max Drawdown', value: '-8.3%', icon: TrendingDown, color: 'text-[#e74c3c]' },
+              { title: 'Win Rate', value: '67%', icon: Calendar, color: 'text-[#3bc9f4]' }
+            ].map((metric, index) => {
+              const Icon = metric.icon;
+              return (
+                <div key={index} className="bg-[#1c1f26] p-4 rounded-lg border border-gray-700/50">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Icon className={`w-4 h-4 ${metric.color}`} />
+                    <span className="text-sm text-gray-400">{metric.title}</span>
+                  </div>
+                  <span className={`text-xl font-bold ${metric.color}`}>{metric.value}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Results Table */}
+          <div className="bg-[#1c1f26] rounded-lg border border-gray-700/50">
+            <div className="p-4 border-b border-gray-700/50">
+              <h3 className="text-lg font-semibold text-white">Backtest Results</h3>
+            </div>
+            <div className="p-4">
+              <div className="text-center text-gray-400 py-8">
+                <Play className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Click "Run Backtest" to see results</p>
               </div>
             </div>
-            <div>
-              <label className="text-sm text-chimera-lightgrey">Parameters (JSON)</label>
-              <textarea rows={5} placeholder='{ "fast_ema": 12, "slow_ema": 26 }' className="w-full bg-chimera-grey p-2 rounded-md mt-1 font-mono text-sm"></textarea>
-            </div>
-            <button type="submit" className="w-full py-3 font-bold rounded-md bg-chimera-blue hover:bg-chimera-blue/90">
-                🚀 Run Backtest
-            </button>
-          </form>
-        </div>
-        <div className="lg:col-span-2 bg-chimera-lightdark rounded-lg p-2">
-            <h3 className="text-lg font-semibold mb-2 p-2">Backtest History</h3>
-            <div className="overflow-y-auto">
-                 <table className="w-full text-left text-sm">
-                    <thead className="sticky top-0 bg-chimera-lightdark">
-                        <tr className="text-chimera-lightgrey border-b border-chimera-grey">
-                            <th className="p-2 font-medium">Strategy</th>
-                            <th className="p-2 font-medium">Symbol</th>
-                            <th className="p-2 font-medium">Status</th>
-                            <th className="p-2 font-medium text-right">Net P&L</th>
-                            <th className="p-2 font-medium text-right">Sharpe Ratio</th>
-                            <th className="p-2 font-medium text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {mockHistory.map(h => (
-                            <tr key={h.id} className="border-b border-chimera-grey/50 hover:bg-chimera-grey/40">
-                                <td className="p-2 font-semibold">{h.strategy}</td>
-                                <td className="p-2">{h.symbol}</td>
-                                <td className="p-2">{h.status}</td>
-                                <td className={`p-2 font-mono text-right ${h.pnl > 0 ? 'text-chimera-green' : 'text-chimera-red'}`}>{h.pnl?.toFixed(2) || '-'}</td>
-                                <td className={`p-2 font-mono text-right ${h.sharpe > 1 ? 'text-chimera-green' : 'text-chimera-lightgrey'}`}>{h.sharpe?.toFixed(2) || '-'}</td>
-                                <td className="p-2 text-center">
-                                    <button className="text-chimera-blue font-semibold text-xs">View Report</button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                 </table>
-            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default BacktestingPage;
+}
