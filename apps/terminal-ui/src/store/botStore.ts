@@ -3,59 +3,62 @@ import { create } from 'zustand';
 import { BotStatus, Position, Order, Trade, PortfolioStats } from '../../../types';
 
 interface BotStore {
-  // Bot Management
+  // State
   bots: BotStatus[];
   activeBots: string[];
-  
-  // Portfolio Data
   positions: Position[];
   orders: Order[];
   trades: Trade[];
   portfolioStats: PortfolioStats;
-  
-  // UI State
   isConnected: boolean;
   lastUpdate: Date;
+  tradingMode: 'live' | 'paper';
   
   // Actions
   setBots: (bots: BotStatus[]) => void;
-  updateBotStatus: (botName: string, status: BotStatus['status']) => void;
+  updateBotStatus: (botName: string, status: 'running' | 'stopped' | 'error') => void;
   startBot: (botName: string) => void;
   stopBot: (botName: string) => void;
-  
   setPositions: (positions: Position[]) => void;
   updatePosition: (symbol: string, updates: Partial<Position>) => void;
-  
+  addPosition: (position: Position) => void;
+  removePosition: (symbol: string) => void;
   setOrders: (orders: Order[]) => void;
   addOrder: (order: Order) => void;
   updateOrder: (orderId: string, updates: Partial<Order>) => void;
-  
   setTrades: (trades: Trade[]) => void;
   addTrade: (trade: Trade) => void;
-  
-  updatePortfolioStats: (stats: PortfolioStats) => void;
+  updatePortfolioStats: (stats: Partial<PortfolioStats>) => void;
   setConnectionStatus: (connected: boolean) => void;
-  updateLastUpdate: () => void;
+  setTradingMode: (mode: 'live' | 'paper') => void;
+  reset: () => void;
 }
 
 export const useBotStore = create<BotStore>((set, get) => ({
-  // Initial State
+  // Initial state
   bots: [
     {
       name: 'Equity-Bot-1',
       status: 'running',
-      pnl: 2450.75,
-      strategy: { name: 'Moving Average Crossover', symbol: 'RELIANCE' },
+      pnl: 2450.50,
+      strategy: {
+        name: 'Mean Reversion',
+        symbol: 'RELIANCE'
+      },
       lastUpdate: new Date()
     },
     {
       name: 'Crypto-Bot-1',
       status: 'stopped',
-      pnl: -150.50,
-      strategy: { name: 'RSI Divergence', symbol: 'BTC-USDT' },
+      pnl: -150.25,
+      strategy: {
+        name: 'Momentum',
+        symbol: 'BTCUSDT'
+      },
       lastUpdate: new Date()
     }
   ],
+  
   activeBots: ['Equity-Bot-1'],
   
   positions: [
@@ -63,33 +66,27 @@ export const useBotStore = create<BotStore>((set, get) => ({
       id: '1',
       symbol: 'RELIANCE',
       quantity: 100,
-      avgPrice: 2450.50,
-      currentPrice: 2465.75,
-      pnl: 1525.00,
-      dayChange: 15.25,
-      dayChangePercent: 0.62,
-      unrealizedPnl: 1525.00,
-      miniChart: [
-        { time: Date.now() - 86400000, price: 2440 },
-        { time: Date.now() - 43200000, price: 2455 },
-        { time: Date.now(), price: 2465.75 }
-      ]
+      avgPrice: 2400.00,
+      currentPrice: 2450.50,
+      pnl: 5050.00,
+      dayChange: 25.50,
+      dayChangePercent: 1.05,
+      unrealizedPnl: 5050.00,
+      logo: '',
+      botName: 'Equity-Bot-1'
     },
     {
       id: '2',
       symbol: 'TCS',
       quantity: 50,
-      avgPrice: 3650.00,
-      currentPrice: 3645.25,
-      pnl: -237.50,
-      dayChange: -4.75,
-      dayChangePercent: -0.13,
-      unrealizedPnl: -237.50,
-      miniChart: [
-        { time: Date.now() - 86400000, price: 3655 },
-        { time: Date.now() - 43200000, price: 3648 },
-        { time: Date.now(), price: 3645.25 }
-      ]
+      avgPrice: 3500.00,
+      currentPrice: 3480.00,
+      pnl: -1000.00,
+      dayChange: -20.00,
+      dayChangePercent: -0.57,
+      unrealizedPnl: -1000.00,
+      logo: '',
+      botName: 'Equity-Bot-1'
     }
   ],
   
@@ -130,16 +127,18 @@ export const useBotStore = create<BotStore>((set, get) => ({
   
   isConnected: true,
   lastUpdate: new Date(),
+  tradingMode: 'paper',
   
   // Actions
-  setBots: (bots) => set({ bots }),
+  setBots: (bots) => set({ bots, lastUpdate: new Date() }),
   
   updateBotStatus: (botName, status) => set((state) => ({
     bots: state.bots.map(bot => 
       bot.name === botName 
         ? { ...bot, status, lastUpdate: new Date() }
         : bot
-    )
+    ),
+    lastUpdate: new Date()
   })),
   
   startBot: (botName) => set((state) => ({
@@ -148,7 +147,8 @@ export const useBotStore = create<BotStore>((set, get) => ({
       bot.name === botName 
         ? { ...bot, status: 'running' as const, lastUpdate: new Date() }
         : bot
-    )
+    ),
+    lastUpdate: new Date()
   })),
   
   stopBot: (botName) => set((state) => ({
@@ -157,38 +157,81 @@ export const useBotStore = create<BotStore>((set, get) => ({
       bot.name === botName 
         ? { ...bot, status: 'stopped' as const, lastUpdate: new Date() }
         : bot
-    )
+    ),
+    lastUpdate: new Date()
   })),
   
-  setPositions: (positions) => set({ positions }),
+  setPositions: (positions) => set({ positions, lastUpdate: new Date() }),
   
   updatePosition: (symbol, updates) => set((state) => ({
     positions: state.positions.map(pos => 
       pos.symbol === symbol ? { ...pos, ...updates } : pos
-    )
+    ),
+    lastUpdate: new Date()
+  })),
+
+  addPosition: (position) => set((state) => ({
+    positions: [...state.positions, position],
+    lastUpdate: new Date()
+  })),
+
+  removePosition: (symbol) => set((state) => ({
+    positions: state.positions.filter(pos => pos.symbol !== symbol),
+    lastUpdate: new Date()
   })),
   
-  setOrders: (orders) => set({ orders }),
+  setOrders: (orders) => set({ orders, lastUpdate: new Date() }),
   
   addOrder: (order) => set((state) => ({
-    orders: [order, ...state.orders]
+    orders: [...state.orders, order],
+    lastUpdate: new Date()
   })),
-  
+
   updateOrder: (orderId, updates) => set((state) => ({
     orders: state.orders.map(order => 
       order.id === orderId ? { ...order, ...updates } : order
-    )
+    ),
+    lastUpdate: new Date()
   })),
   
-  setTrades: (trades) => set({ trades }),
+  setTrades: (trades) => set({ trades, lastUpdate: new Date() }),
   
   addTrade: (trade) => set((state) => ({
-    trades: [trade, ...state.trades.slice(0, 99)] // Keep last 100 trades
+    trades: [...state.trades, trade],
+    lastUpdate: new Date()
   })),
   
-  updatePortfolioStats: (stats) => set({ portfolioStats: stats }),
+  updatePortfolioStats: (stats) => set((state) => ({
+    portfolioStats: { ...state.portfolioStats, ...stats },
+    lastUpdate: new Date()
+  })),
   
-  setConnectionStatus: (connected) => set({ isConnected: connected }),
+  setConnectionStatus: (connected) => set({ 
+    isConnected: connected, 
+    lastUpdate: new Date() 
+  }),
+
+  setTradingMode: (mode) => set({ 
+    tradingMode: mode, 
+    lastUpdate: new Date() 
+  }),
   
-  updateLastUpdate: () => set({ lastUpdate: new Date() })
+  reset: () => set({
+    bots: [],
+    activeBots: [],
+    positions: [],
+    orders: [],
+    trades: [],
+    portfolioStats: {
+      totalValue: 0,
+      totalPnl: 0,
+      dayChange: 0,
+      dayChangePercent: 0,
+      cashBalance: 0,
+      marginUsed: 0
+    },
+    isConnected: false,
+    tradingMode: 'paper',
+    lastUpdate: new Date()
+  })
 }));

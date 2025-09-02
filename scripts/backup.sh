@@ -2,58 +2,77 @@
 #!/bin/bash
 
 # Chimera Trading Terminal Backup Script
-# This script backs up the database and important configuration files
+# Creates a backup of the database and important configuration files
 
-BACKUP_DIR="backups"
-TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-BACKUP_FILE="chimera_backup_$TIMESTAMP"
-
-echo "🔄 Starting Chimera Trading Terminal backup..."
+# Set variables
+BACKUP_DIR="./backups"
+DATE=$(date +"%Y%m%d_%H%M%S")
+BACKUP_NAME="chimera_backup_$DATE"
+DB_BACKUP_FILE="$BACKUP_DIR/${BACKUP_NAME}_database.sql"
+CONFIG_BACKUP_FILE="$BACKUP_DIR/${BACKUP_NAME}_config.tar.gz"
 
 # Create backup directory if it doesn't exist
-mkdir -p $BACKUP_DIR
+mkdir -p "$BACKUP_DIR"
 
-# Database backup
-if [ -n "$DATABASE_URL" ]; then
-    echo "📊 Backing up database..."
-    pg_dump $DATABASE_URL > "$BACKUP_DIR/${BACKUP_FILE}_database.sql"
-    echo "✅ Database backup completed"
+echo "Starting Chimera Trading Terminal backup..."
+echo "Backup directory: $BACKUP_DIR"
+echo "Backup timestamp: $DATE"
+
+# Backup database (if using PostgreSQL)
+if command -v pg_dump &> /dev/null; then
+    echo "Backing up PostgreSQL database..."
+    pg_dump $DATABASE_URL > "$DB_BACKUP_FILE" 2>/dev/null
+    if [ $? -eq 0 ]; then
+        echo "Database backup created: $DB_BACKUP_FILE"
+    else
+        echo "Warning: Database backup failed or no database configured"
+    fi
 else
-    echo "⚠️ DATABASE_URL not found, skipping database backup"
+    echo "PostgreSQL not found, skipping database backup"
 fi
 
-# Configuration backup
-echo "📁 Backing up configuration files..."
-tar -czf "$BACKUP_DIR/${BACKUP_FILE}_config.tar.gz" \
-    .env* \
-    prisma/ \
-    docker-compose.yml \
+# Backup configuration files and important data
+echo "Backing up configuration files..."
+tar -czf "$CONFIG_BACKUP_FILE" \
+    --exclude="node_modules" \
+    --exclude="dist" \
+    --exclude=".git" \
+    --exclude="backups" \
+    --exclude="*.log" \
+    .env.example \
     package.json \
     tsconfig.json \
-    vite.config.ts 2>/dev/null
-
-echo "✅ Configuration backup completed"
-
-# Application backup
-echo "📦 Backing up application code..."
-tar -czf "$BACKUP_DIR/${BACKUP_FILE}_app.tar.gz" \
-    apps/ \
-    components/ \
-    pages/ \
-    packages/ \
+    vite.config.ts \
+    tailwind.config.js \
+    prisma/ \
     scripts/ \
-    types.ts \
-    App.tsx \
-    index.tsx 2>/dev/null
+    docker-compose.yml \
+    .replit \
+    2>/dev/null
 
-echo "✅ Application backup completed"
-
-echo "🎉 Backup completed successfully!"
-echo "📁 Backup files created in $BACKUP_DIR/"
-ls -la $BACKUP_DIR/*$TIMESTAMP*
+if [ $? -eq 0 ]; then
+    echo "Configuration backup created: $CONFIG_BACKUP_FILE"
+else
+    echo "Warning: Configuration backup failed"
+fi
 
 # Clean up old backups (keep last 10)
-echo "🧹 Cleaning up old backups..."
-cd $BACKUP_DIR
+echo "Cleaning up old backups..."
+cd "$BACKUP_DIR"
 ls -t chimera_backup_* | tail -n +11 | xargs -r rm
-echo "✅ Cleanup completed"
+cd ..
+
+echo "Backup completed successfully!"
+echo "Files created:"
+if [ -f "$DB_BACKUP_FILE" ]; then
+    echo "  - Database: $DB_BACKUP_FILE"
+fi
+if [ -f "$CONFIG_BACKUP_FILE" ]; then
+    echo "  - Config: $CONFIG_BACKUP_FILE"
+fi
+
+# Show backup size
+if [ -f "$CONFIG_BACKUP_FILE" ]; then
+    BACKUP_SIZE=$(du -h "$CONFIG_BACKUP_FILE" | cut -f1)
+    echo "Total backup size: $BACKUP_SIZE"
+fi
