@@ -1,124 +1,196 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const StrategiesPage: React.FC = () => {
-  const [strategies, setStrategies] = useState([]);
+interface Strategy {
+  id: string;
+  name: string;
+  description: string;
+  symbol: string;
+  parameters: Record<string, any>;
+  isActive: boolean;
+  lastBacktestDate?: Date;
+  performance?: {
+    totalReturn: number;
+    sharpeRatio: number;
+    maxDrawdown: number;
+  };
+}
+
+export const StrategiesPage: React.FC = () => {
+  const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchStrategies = async () => {
+      try {
+        // Mock data for development
+        const mockStrategies: Strategy[] = [
+          {
+            id: '1',
+            name: 'ML Signal Strategy',
+            description: 'Machine learning based signal generation strategy',
+            symbol: 'RELIANCE',
+            parameters: {
+              lookback: 20,
+              threshold: 0.7,
+              stopLoss: 2,
+              takeProfit: 5
+            },
+            isActive: true,
+            lastBacktestDate: new Date('2024-01-15'),
+            performance: {
+              totalReturn: 15.5,
+              sharpeRatio: 1.8,
+              maxDrawdown: 8.2
+            }
+          },
+          {
+            id: '2',
+            name: 'Grid Trading Strategy',
+            description: 'Grid-based trading strategy for crypto markets',
+            symbol: 'BTCUSDT',
+            parameters: {
+              gridSize: 0.5,
+              numberOfGrids: 10,
+              orderSize: 0.1
+            },
+            isActive: false,
+            lastBacktestDate: new Date('2024-01-10'),
+            performance: {
+              totalReturn: 8.3,
+              sharpeRatio: 1.2,
+              maxDrawdown: 12.1
+            }
+          }
+        ];
+
+        setStrategies(mockStrategies);
+        setLoading(false);
+      } catch (err) {
+        setError('Failed to fetch strategies');
+        setLoading(false);
+      }
+    };
+
     fetchStrategies();
   }, []);
 
-  const fetchStrategies = async () => {
+  const handleToggleStrategy = async (strategyId: string) => {
     try {
-      // TODO: Fetch strategies from API
-      // const response = await fetch('/api/strategies');
-      // const data = await response.json();
-      // setStrategies(data);
-      
-      setStrategies([]); // Placeholder
-    } catch (error) {
-      console.error('Failed to fetch strategies:', error);
-    } finally {
-      setLoading(false);
+      setStrategies(prev => prev.map(s => 
+        s.id === strategyId ? { ...s, isActive: !s.isActive } : s
+      ));
+    } catch (err) {
+      console.error('Failed to toggle strategy:', err);
     }
   };
 
-const StrategyModal = ({ strategy, onClose, onSave }) => {
-    const [params, setParams] = useState(JSON.stringify(strategy?.params || {}, null, 2));
-    
-    const handleSave = () => {
-        try {
-            const parsedParams = JSON.parse(params);
-            onSave({ ...strategy, params: parsedParams });
-        } catch (e) {
-            alert('Invalid JSON in parameters.');
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-10">
-            <div className="bg-chimera-lightdark p-6 rounded-lg w-full max-w-md">
-                <h3 className="text-lg font-bold mb-4">{strategy?.id ? 'Edit' : 'Create'} Strategy</h3>
-                {/* Simplified form for conceptual layout */}
-                <div className="space-y-4">
-                     <div>
-                        <label className="text-xs text-chimera-lightgrey">Strategy Name</label>
-                        <input defaultValue={strategy?.strategyName} className="w-full bg-chimera-grey p-2 rounded-md" />
-                     </div>
-                     <div>
-                        <label className="text-xs text-chimera-lightgrey">Parameters (JSON)</label>
-                        <textarea value={params} onChange={e => setParams(e.target.value)} rows={6} className="w-full bg-chimera-grey p-2 rounded-md font-mono text-sm"></textarea>
-                     </div>
-                </div>
-                <div className="flex justify-end space-x-2 mt-6">
-                    <button onClick={onClose} className="py-2 px-4 rounded-md bg-chimera-grey">Cancel</button>
-                    <button onClick={handleSave} className="py-2 px-4 rounded-md bg-chimera-blue">Save</button>
-                </div>
-            </div>
-        </div>
-    )
-};
-
-
-export const StrategiesPage: React.FC = () => {
-    const [strategies, setStrategies] = useState(mockStrategies);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingStrategy, setEditingStrategy] = useState(null);
-    
-    const handleDeploy = async (id: string) => {
-        if (!confirm('Are you sure you want to deploy this strategy? This will become the active configuration.')) return;
-        try {
-            // In a real app, API host is configured
-            await fetch(`http://localhost:3000/api/strategies/${id}/deploy`, { method: 'POST' });
-            alert('Deploy command sent successfully!');
-            // You would typically refetch the strategies list here to show the new active state
-        } catch (error) {
-            alert('Failed to send deploy command.');
-        }
+  const handleRunBacktest = async (strategyId: string) => {
+    try {
+      console.log(`Running backtest for strategy ${strategyId}`);
+      // In real implementation, this would trigger a backtest
+    } catch (err) {
+      console.error('Failed to run backtest:', err);
     }
+  };
 
+  if (loading) {
     return (
-        <div className="h-full flex flex-col p-4 gap-4">
-            {isModalOpen && <StrategyModal strategy={editingStrategy} onClose={() => setIsModalOpen(false)} onSave={() => {}} />}
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold">Strategy Management</h2>
-                <button onClick={() => { setEditingStrategy(null); setIsModalOpen(true); }} className="bg-chimera-blue px-4 py-2 rounded-md font-semibold">
-                    New Strategy
-                </button>
-            </div>
-            
-            <div className="flex-grow bg-chimera-lightdark rounded-md p-2 overflow-y-auto">
-                 <table className="w-full text-left text-sm">
-                    <thead className="sticky top-0 bg-chimera-lightdark">
-                        <tr className="text-chimera-lightgrey border-b border-chimera-grey">
-                            <th className="p-2 font-medium">Name</th>
-                            <th className="p-2 font-medium">Bot</th>
-                            <th className="p-2 font-medium">Status</th>
-                            <th className="p-2 font-medium">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {strategies.map(s => (
-                            <tr key={s.id} className="border-b border-chimera-grey/50">
-                                <td className="p-3 font-semibold">{s.strategyName}</td>
-                                <td className="p-3 text-chimera-lightgrey">{s.botName}</td>
-                                <td className="p-3">
-                                    {s.isActive ? (
-                                        <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-300">Active</span>
-                                    ) : (
-                                        <span className="px-2 py-0.5 text-xs rounded-full bg-gray-500/20 text-gray-400">Inactive</span>
-                                    )}
-                                </td>
-                                <td className="p-3 space-x-2">
-                                    <button onClick={() => handleDeploy(s.id)} disabled={s.isActive} className="font-bold text-chimera-green disabled:text-chimera-grey">Deploy</button>
-                                    <button onClick={() => { setEditingStrategy(s); setIsModalOpen(true); }} className="font-bold text-chimera-blue">Edit</button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                 </table>
-            </div>
-        </div>
+      <div className="h-full flex items-center justify-center">
+        <div className="text-chimera-lightgrey">Loading strategies...</div>
+      </div>
     );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-chimera-blue rounded-md"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold">Trading Strategies</h2>
+        <button className="px-4 py-2 bg-chimera-blue rounded-md hover:bg-blue-600">
+          Create New Strategy
+        </button>
+      </div>
+
+      <div className="grid gap-4">
+        {strategies.map((strategy) => (
+          <div key={strategy.id} className="bg-chimera-lightdark p-4 rounded-lg">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">{strategy.name}</h3>
+                <p className="text-chimera-lightgrey text-sm">{strategy.description}</p>
+                <p className="text-sm mt-1">
+                  <span className="font-medium">Symbol:</span> {strategy.symbol}
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className={`px-2 py-1 rounded text-xs ${
+                  strategy.isActive 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-gray-600 text-gray-300'
+                }`}>
+                  {strategy.isActive ? 'Active' : 'Inactive'}
+                </span>
+                <button
+                  onClick={() => handleToggleStrategy(strategy.id)}
+                  className={`px-3 py-1 rounded text-xs ${
+                    strategy.isActive 
+                      ? 'bg-red-600 hover:bg-red-700' 
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}
+                >
+                  {strategy.isActive ? 'Stop' : 'Start'}
+                </button>
+              </div>
+            </div>
+
+            {strategy.performance && (
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center">
+                  <p className="text-xs text-chimera-lightgrey">Total Return</p>
+                  <p className="font-mono text-sm">{strategy.performance.totalReturn.toFixed(1)}%</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-chimera-lightgrey">Sharpe Ratio</p>
+                  <p className="font-mono text-sm">{strategy.performance.sharpeRatio.toFixed(2)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-chimera-lightgrey">Max Drawdown</p>
+                  <p className="font-mono text-sm">{strategy.performance.maxDrawdown.toFixed(1)}%</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center text-xs text-chimera-lightgrey">
+              <span>
+                Last backtest: {strategy.lastBacktestDate?.toLocaleDateString() || 'Never'}
+              </span>
+              <button
+                onClick={() => handleRunBacktest(strategy.id)}
+                className="px-3 py-1 bg-chimera-grey hover:bg-gray-600 rounded text-white"
+              >
+                Run Backtest
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };

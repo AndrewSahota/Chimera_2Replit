@@ -1,80 +1,75 @@
 
 import { create } from 'zustand';
-import { Order, Position, SystemLog, BotStatus } from '../../../types';
 
-type ConnectionStatus = 'Connected' | 'Connecting' | 'Disconnected';
-
-interface BotState {
-  bots: string[];
-  selectedBot: string; // Will be used in the sidebar's bot control
-  connectionStatus: ConnectionStatus;
-  lastHeartbeat: Date | null;
-  positions: Position[];
-  orders: Order[];
-  logs: SystemLog[];
-  botStatuses: { [botName: string]: BotStatus };
-  sendMessage: (message: string) => void;
-  actions: {
-    selectBot: (botName: string) => void;
-    setConnectionStatus: (status: ConnectionStatus) => void;
-    setInitialState: (data: { positions: Position[]; orders: Order[]; botStatuses: { [botName: string]: BotStatus } }) => void;
-    updatePosition: (position: Position) => void;
-    updateOrder: (order: Order) => void;
-    addLog: (log: SystemLog) => void;
-    updateBotStatus: (status: BotStatus) => void;
-    setHeartbeat: (date: Date) => void;
-    setSendMessage: (fn: (message: string) => void) => void;
+interface BotStatus {
+  name: string;
+  status: 'running' | 'stopped' | 'error';
+  pnl: number;
+  strategy: {
+    name: string;
+    symbol: string;
   };
 }
 
-export const useBotStore = create<BotState>((set, get) => ({
-  bots: ['bot-equities', 'bot-crypto', 'bot-forex'],
-  selectedBot: 'bot-equities', // Default to a specific bot instead of 'all'
-  connectionStatus: 'Connecting',
-  lastHeartbeat: null,
-  positions: [],
-  orders: [],
-  logs: [],
-  botStatuses: {},
-  sendMessage: (message: string) => { console.warn('sendMessage function not initialized'); },
+interface Position {
+  symbol: string;
+  quantity: number;
+  avgPrice: number;
+  currentPrice: number;
+  pnl: number;
+}
+
+interface BotStore {
+  bots: BotStatus[];
+  selectedBot: string;
+  positions: Position[];
   actions: {
-    selectBot: (botName) => set({ selectedBot: botName }),
-    setConnectionStatus: (status) => set({ connectionStatus: status }),
-    setHeartbeat: (date) => set({ lastHeartbeat: date }),
-    setInitialState: (data) => set({ 
-        positions: data.positions, 
-        orders: data.orders,
-        botStatuses: data.botStatuses,
-    }),
-    updatePosition: (position) => {
-      set(state => ({
-        positions: [
-          ...state.positions.filter(p => !(p.symbol === position.symbol && p.botName === position.botName)),
-          position
-        ].sort((a,b) => a.symbol.localeCompare(b.symbol))
-      }));
+    selectBot: (botName: string) => void;
+    updateBotStatus: (botName: string, status: Partial<BotStatus>) => void;
+    updatePositions: (positions: Position[]) => void;
+  };
+}
+
+export const useBotStore = create<BotStore>((set, get) => ({
+  bots: [
+    {
+      name: 'equity-bot',
+      status: 'running',
+      pnl: 1250.75,
+      strategy: { name: 'ML Signal Strategy', symbol: 'RELIANCE' }
     },
-    updateOrder: (order) => {
-      set(state => ({
-        orders: [
-          ...state.orders.filter(o => o.id !== order.id),
-          order
-        ].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime())
-      }));
+    {
+      name: 'crypto-bot',
+      status: 'stopped',
+      pnl: -450.25,
+      strategy: { name: 'Grid Strategy', symbol: 'BTCUSDT' }
+    }
+  ],
+  selectedBot: 'equity-bot',
+  positions: [
+    {
+      symbol: 'RELIANCE',
+      quantity: 100,
+      avgPrice: 2450.50,
+      currentPrice: 2465.75,
+      pnl: 1525.00
     },
-    addLog: (log) => {
-        set(state => ({
-            logs: [log, ...state.logs.slice(0, 199)] // Keep latest 200 logs
-        }));
-    },
-    updateBotStatus: (status) => {
-        set(state => ({
-            botStatuses: {
-                ...state.botStatuses,
-                [status.name]: status,
-            }
-        }));
-    },
-    setSendMessage: (fn) => set({ sendMessage: fn }),
-  }
+    {
+      symbol: 'TCS',
+      quantity: 50,
+      avgPrice: 3200.25,
+      currentPrice: 3185.50,
+      pnl: -737.50
+    }
+  ],
+  actions: {
+    selectBot: (botName: string) => set({ selectedBot: botName }),
+    updateBotStatus: (botName: string, status: Partial<BotStatus>) =>
+      set((state) => ({
+        bots: state.bots.map((bot) =>
+          bot.name === botName ? { ...bot, ...status } : bot
+        ),
+      })),
+    updatePositions: (positions: Position[]) => set({ positions }),
+  },
 }));

@@ -1,72 +1,72 @@
 
-export enum OrderSide {
-  BUY = 'BUY',
-  SELL = 'SELL',
-}
-
-export enum OrderType {
-  LIMIT = 'LIMIT',
-  MARKET = 'MARKET',
-}
-
-export enum OrderStatus {
-  OPEN = 'OPEN',
-  FILLED = 'FILLED',
-  PARTIALLY_FILLED = 'PARTIALLY_FILLED',
-  CANCELLED = 'CANCELLED',
-}
-
-export interface Order {
-  id: string;
-  symbol: string;
-  side: OrderSide;
-  type: OrderType;
-  quantity: number;
-  price?: number;
-  filledQuantity: number;
-  status: OrderStatus;
-  createdAt: Date;
-  botName?: string;
-}
-
-export interface Position {
-  symbol: string;
-  quantity: number;
-  averagePrice: number;
-  unrealizedPnl: number;
-  botName?: string;
-}
-
 export interface Tick {
   symbol: string;
   price: number;
   timestamp: Date;
 }
 
-export interface HeartbeatMessage {
-  service: string;
-  timestamp: Date;
-  status: 'OK';
+export interface Order {
+  id: string;
+  symbol: string;
+  side: OrderSide;
+  type: OrderType.MARKET | OrderType.LIMIT;
+  quantity: number;
+  price?: number;
+  filledQuantity: number;
+  status: OrderStatus;
+  createdAt: Date;
 }
 
-export interface OrderBookLevel {
-    price: number;
-    size: number;
-    total?: number;
+export interface Position {
+  symbol: string;
+  quantity: number;
+  avgPrice: number;
+  currentPrice: number;
+  pnl: number;
 }
 
-export interface SystemLog {
-  timestamp: Date;
-  level: 'INFO' | 'CMD' | 'TRADE' | 'ERROR' | 'RISK';
-  service: string;
-  message: string;
+export enum OrderSide {
+  BUY = 'BUY',
+  SELL = 'SELL'
 }
 
-export interface BotStatus {
-  name: string;
-  status: 'Running' | 'Stopped' | 'Error';
-  strategy: {
-    name: string;
-    symbol: string;
-  };
+export enum OrderType {
+  MARKET = 'MARKET',
+  LIMIT = 'LIMIT',
+  BRACKET = 'BRACKET'
+}
+
+export enum OrderStatus {
+  OPEN = 'OPEN',
+  FILLED = 'FILLED',
+  CANCELLED = 'CANCELLED',
+  REJECTED = 'REJECTED'
+}
+
+export interface PlaceOrderParams {
+  symbol: string;
+  side: string;
+  type: string;
+  quantity: number;
+  price?: number;
+}
+
+export interface BracketOrderParams extends PlaceOrderParams {
+  takeProfit: number;
+  stopLoss: number;
+}
+
+export interface IBroker {
+  connect(): Promise<void>;
+  placeOrder(params: PlaceOrderParams): Promise<Order | Order[]>;
+  cancelOrder(orderId: string): Promise<boolean>;
+  getPositions(): Promise<Position[]>;
+  getOpenOrders(): Promise<Order[]>;
+}
+
+export interface IDataFeed {
+  connect(): Promise<void>;
+  subscribe(symbols: string[]): Promise<void>;
+  on(event: string, listener: Function): void;
+  emit(event: string, ...args: any[]): void;
 }
