@@ -3,12 +3,34 @@ import { useEffect, useRef } from 'react';
 import { useBotStore } from '../store/botStore';
 import { BotStatus, Order, Position, SystemLog } from '../../../types';
 
-// Mocking some data for demonstration
-const mockBotStatuses: { [key: string]: BotStatus } = {
-  'bot-equities': { name: 'bot-equities', status: 'Running', strategy: { name: 'EMA Crossover', symbol: 'RELIANCE' } },
-  'bot-crypto': { name: 'bot-crypto', status: 'Stopped', strategy: { name: 'Mean Reversion', symbol: 'BTC/USD' } },
-  'bot-forex': { name: 'bot-forex', status: 'Error', strategy: { name: 'MACD Divergence', symbol: 'EUR/USD' } },
-};
+ws.current.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          switch (data.type) {
+            case 'BOT_STATUS':
+              actions.updateBotStatus(data.payload);
+              break;
+            case 'ORDER_UPDATE':
+              actions.updateOrder(data.payload);
+              break;
+            case 'POSITION_UPDATE':
+              actions.updatePosition(data.payload);
+              break;
+            case 'LOG':
+              actions.addLog(data.payload);
+              break;
+            case 'TICK':
+              // Handle real-time price updates
+              actions.updateTick(data.payload);
+              break;
+            default:
+              console.log('Unknown message type:', data.type);
+          }
+        } catch (error) {
+          console.error('Failed to parse WebSocket message:', error);
+        }
+      };
 const mockPositions: Position[] = [
     { botName: 'bot-equities', symbol: 'RELIANCE', quantity: 10, averagePrice: 2500.50, unrealizedPnl: 150.25 },
     { botName: 'bot-crypto', symbol: 'BTC/USD', quantity: 0.5, averagePrice: 68000, unrealizedPnl: -500 },
@@ -28,19 +50,7 @@ export const useWebSocket = (url: string) => {
     });
     actions.setHeartbeat(new Date());
 
-    // Mock live log updates
-    const logInterval = setInterval(() => {
-        const levels: SystemLog['level'][] = ['INFO', 'TRADE', 'ERROR', 'CMD', 'RISK'];
-        const services = ['bot-equities', 'bot-crypto', 'Risk Overseer'];
-        const messages = ['Connecting to Zerodha...', 'BUY order for 10 RELIANCE @ 2500.50 FILLED.', 'Lost connection to broker API.', 'StopStrategy command issued to Crypto Bot.', 'Portfolio drawdown has breached the -2% warning threshold.'];
-        const randomLog: SystemLog = {
-            timestamp: new Date(),
-            level: levels[Math.floor(Math.random() * levels.length)],
-            service: services[Math.floor(Math.random() * services.length)],
-            message: messages[Math.floor(Math.random() * messages.length)],
-        };
-        actions.addLog(randomLog);
-    }, 5000);
+    // TODO: Remove mock log generation - real logs will come via WebSocket
 
 
     if (!url) return;

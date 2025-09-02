@@ -2,55 +2,72 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 // import { PrismaService } from '../prisma/prisma.service'; // Assumes Prisma service exists
 
 // Mock PrismaService for demonstration
-const mockPrisma = {
-  trade: {
-    findMany: async (options) => {
-      // Generate mock trade data for 'bot-equities'
-      if (options.where.botName === 'bot-equities') {
-        let pnl = 100000;
-        const trades = [];
-        for (let i = 0; i < 150; i++) {
-            const tradePnl = (Math.random() - 0.45) * 500;
-            pnl += tradePnl;
-            trades.push({ 
-                id: `trade-${i}`, 
-                pnl: tradePnl, 
-                timestamp: new Date(Date.now() - (150 - i) * 3600000) 
-            });
-        }
-        return trades;
-      }
-      return [];
-    },
-  },
-  strategyConfiguration: {
-    // FIX: Updated mock function to accept an argument to match its usage.
-    findFirst: async (options) => ({
-        backtestResult: {
-            totalPnl: 18500,
-            winRate: 0.68,
-            maxDrawdown: 0.08,
-            equityCurve: Array.from({length: 150}, (_, i) => ({
-                time: new Date(Date.now() - (150 - i) * 3600000).getTime(),
-                equity: 100000 + (i * 120) + (Math.random() - 0.5) * 2000,
-            }))
-        }
-    })
-  }
-};
-
+import { Injectable, Logger } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service'; // TODO: Add PrismaService
 
 @Injectable()
 export class AnalyticsService {
-  // constructor(private prisma: PrismaService) {}
-  // Using mock for demonstration
-  private prisma = mockPrisma;
+  private readonly logger = new Logger(AnalyticsService.name);
+  
+  constructor(private prisma: PrismaService) {}
 
   async getPerformance(botName: string) {
-    const trades = await this.prisma.trade.findMany({
-      where: { botName },
-      orderBy: { timestamp: 'asc' },
-    });
+    try {
+      const trades = await this.prisma.trade.findMany({
+        where: { botName },
+        orderBy: { timestamp: 'asc' },
+      });
+
+      if (trades.length === 0) {
+        return {
+          totalPnl: 0,
+          totalTrades: 0,
+          winRate: 0,
+          equityCurve: []
+        };
+      }
+
+      let runningPnl = 100000; // Starting capital
+      const equityCurve = trades.map(trade => {
+        runningPnl += trade.pnl;
+        return {
+          time: trade.timestamp.getTime(),
+          equity: runningPnl
+        };
+      });
+
+      const totalPnl = trades.reduce((sum, trade) => sum + trade.pnl, 0);
+      const winningTrades = trades.filter(trade => trade.pnl > 0).length;
+      const winRate = trades.length > 0 ? winningTrades / trades.length : 0;
+
+      return {
+        totalPnl,
+        totalTrades: trades.length,
+        winRate,
+        equityCurve
+      };
+    } catch (error) {
+      this.logger.error('Failed to fetch performance data:', error);
+      throw new Error('Performance data fetch failed');
+    }
+  }
+
+  async getBacktestResults(strategyId: string) {
+    try {
+      const strategy = await this.prisma.strategyConfiguration.findFirst({
+        where: { id: strategyId },
+        include: { backtestResult: true }
+      });
+
+      if (!strategy?.backtestResult) {
+        return null;
+      }
+
+      return strategy.backtestResult;
+    } catch (error) {
+      this.logger.error('Failed to fetch backtest results:', error);
+      throw new Error('Backtest results fetch failed');
+    }
 
     if (trades.length === 0) {
       throw new NotFoundException(`No trades found for bot: ${botName}`);

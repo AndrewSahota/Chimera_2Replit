@@ -3,35 +3,71 @@ import { Logger } from '@nestjs/common';
 
 const logger = new Logger('BacktestingWorker');
 
-/**
- * This function simulates running a full backtest for a single set of parameters.
- * In a real implementation, it would:
- * 1. Fetch historical data from the database.
- * 2. Instantiate the specified strategy with the given parameters.
- * 3. Loop through the historical data, calling the strategy's onTick method.
- * 4. Simulate the broker's behavior for order placement, fills, etc.
- * 5. Calculate and return performance metrics (P&L, win rate, drawdown).
- */
 async function runBacktest(params: any): Promise<any> {
     logger.log(`Starting backtest with params: ${JSON.stringify(params)}`);
     
-    // Simulate a long-running process
-    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
-    
-    // Mocked results
-    const totalPnl = (Math.random() - 0.2) * 20000;
-    const winRate = 0.4 + Math.random() * 0.3;
-    const maxDrawdown = 0.05 + Math.random() * 0.15;
+    try {
+        // 1. Fetch historical data from database
+        const historicalData = await fetchHistoricalData(params.symbol, params.startDate, params.endDate);
+        
+        // 2. Initialize strategy with parameters
+        const strategy = await initializeStrategy(params.strategyType, params.strategyParams);
+        
+        // 3. Initialize simulated broker
+        const broker = new SimulatedBroker(params.initialCapital || 100000);
+        
+        // 4. Run backtest simulation
+        const results = await simulateStrategy(strategy, broker, historicalData);
+        
+        logger.log(`Finished backtest with P&L: ${results.totalPnl.toFixed(2)}`);
+        return results;
+    } catch (error) {
+        logger.error('Backtest failed:', error);
+        throw new Error('Backtest execution failed');
+    }
+}
 
-    const result = {
-        params,
-        totalPnl,
-        winRate,
-        maxDrawdown,
-    };
+async function fetchHistoricalData(symbol: string, startDate: Date, endDate: Date): Promise<any[]> {
+    // TODO: Fetch from database using Prisma
+    // const data = await prisma.historicalCandle.findMany({
+    //     where: {
+    //         symbol,
+    //         timestamp: {
+    //             gte: startDate,
+    //             lte: endDate
+    //         }
+    //     },
+    //     orderBy: { timestamp: 'asc' }
+    // });
     
-    logger.log(`Finished backtest with P&L: ${totalPnl.toFixed(2)}`);
-    return result;
+    logger.log(`Fetching historical data for ${symbol} (placeholder)`);
+    return [];
+}
+
+async function initializeStrategy(strategyType: string, params: any): Promise<any> {
+    // TODO: Dynamically load and initialize strategy class
+    // const StrategyClass = await import(`./strategies/${strategyType}`);
+    // return new StrategyClass(params);
+    
+    logger.log(`Initializing ${strategyType} strategy (placeholder)`);
+    return null;
+}
+
+async function simulateStrategy(strategy: any, broker: any, data: any[]): Promise<any> {
+    // TODO: Implement actual simulation logic
+    // - Loop through historical data
+    // - Call strategy.onTick() for each data point
+    // - Process orders through simulated broker
+    // - Calculate performance metrics
+    
+    logger.log('Running strategy simulation (placeholder)');
+    return {
+        totalPnl: 0,
+        winRate: 0,
+        maxDrawdown: 0,
+        totalTrades: 0,
+        equityCurve: []
+    };
 }
 
 // Main worker logic

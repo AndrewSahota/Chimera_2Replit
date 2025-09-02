@@ -1,11 +1,28 @@
 
 import React, { useState } from 'react';
 
-const mockStrategies = [
-    { id: 'strat-1', strategyName: 'EMA Crossover', botName: 'bot-equities', isActive: true, params: { fast: 12, slow: 26 } },
-    { id: 'strat-2', strategyName: 'RSI Momentum', botName: 'bot-equities', isActive: false, params: { period: 14, overbought: 70 } },
-    { id: 'strat-3', strategyName: 'Mean Reversion', botName: 'bot-crypto', isActive: true, params: { lookback: 50, stdev: 2 } },
-];
+const StrategiesPage: React.FC = () => {
+  const [strategies, setStrategies] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStrategies();
+  }, []);
+
+  const fetchStrategies = async () => {
+    try {
+      // TODO: Fetch strategies from API
+      // const response = await fetch('/api/strategies');
+      // const data = await response.json();
+      // setStrategies(data);
+      
+      setStrategies([]); // Placeholder
+    } catch (error) {
+      console.error('Failed to fetch strategies:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 const StrategyModal = ({ strategy, onClose, onSave }) => {
     const [params, setParams] = useState(JSON.stringify(strategy?.params || {}, null, 2));

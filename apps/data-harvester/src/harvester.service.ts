@@ -58,13 +58,52 @@ export class HarvesterService {
     }
   }
   
-  // Mock function to simulate fetching from an API like Zerodha or Binance
   private async fetchDataFromProvider(symbol: string, startDate: Date): Promise<any[]> {
-     // In a real scenario, you would use an SDK or axios to call the data provider.
-     // e.g., await kiteConnect.getHistoricalData(instrumentToken, 'day', startDate, new Date());
-     return [
-        { symbol: 'BTC-USD', timestamp: new Date('2023-10-27T00:00:00.000Z'), open: 34000, high: 34500, low: 33800, close: 34400, volume: 1200 },
-        { symbol: 'BTC-USD', timestamp: new Date('2023-10-28T00:00:00.000Z'), open: 34400, high: 35000, low: 34200, close: 34950, volume: 1500 },
-     ];
+    try {
+      // TODO: Implement real data fetching based on symbol type
+      if (symbol.includes('BTC') || symbol.includes('USD')) {
+        return await this.fetchCryptoData(symbol, startDate);
+      } else {
+        return await this.fetchEquityData(symbol, startDate);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to fetch data for ${symbol}:`, error);
+      return [];
+    }
+  }
+
+  private async fetchEquityData(symbol: string, startDate: Date): Promise<any[]> {
+    // TODO: Fetch from Zerodha historical data API
+    // const instrumentToken = await this.getInstrumentToken(symbol);
+    // const endDate = new Date();
+    // const response = await this.kiteConnect.getHistoricalData(
+    //   instrumentToken,
+    //   'day',
+    //   startDate,
+    //   endDate
+    // );
+    
+    this.logger.log(`Fetching equity data for ${symbol} from ${startDate} (placeholder)`);
+    return [];
+  }
+
+  private async fetchCryptoData(symbol: string, startDate: Date): Promise<any[]> {
+    // TODO: Fetch from WazirX or Binance API
+    // const response = await this.cryptoApiClient.get('/api/v3/klines', {
+    //   params: {
+    //     symbol: symbol.replace('/', ''),
+    //     interval: '1d',
+    //     startTime: startDate.getTime(),
+    //     endTime: Date.now()
+    //   }
+    // });
+    
+    this.logger.log(`Fetching crypto data for ${symbol} from ${startDate} (placeholder)`);
+    return [];
+  }
+
+  private async getInstrumentToken(symbol: string): Promise<number> {
+    // TODO: Map symbol to instrument token using Zerodha instruments list
+    return 0;
   }
 }
