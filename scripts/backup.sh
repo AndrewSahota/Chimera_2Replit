@@ -11,7 +11,7 @@ DB_PASSWORD="chimera_password"
 DB_NAME="chimera_db"
 DB_HOST="localhost" # Assuming you run this from the host machine
 DB_PORT="5432"
-BACKUP_DIR="/path/to/your/backups" # IMPORTANT: Change this to your desired backup location
+BACKUP_DIR="./backups" # Store backups in project directory
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 BACKUP_FILE="${BACKUP_DIR}/${DB_NAME}_backup_${TIMESTAMP}.sql.gz"
 
@@ -32,7 +32,7 @@ export PGPASSWORD=$DB_PASSWORD
 # --blobs: include large objects
 # We pipe the output directly to gzip for compression
 pg_dump -h ${DB_HOST} -p ${DB_PORT} -U ${DB_USER} -d ${DB_NAME} --format=c --blobs | gzip > "${BACKUP_FILE}"
-#testing comment
+
 # Unset the password variable for security
 unset PGPASSWORD
 

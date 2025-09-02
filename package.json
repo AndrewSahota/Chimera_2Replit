@@ -6,7 +6,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start:terminal-api": "cd apps/terminal-api && npm start",
+    "start:bot-equities": "cd apps/bot-equities && npm start",
+    "start:risk-manager": "cd apps/risk-manager && npm start",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:reset": "prisma migrate reset",
+    "backup": "chmod +x scripts/backup.sh && ./scripts/backup.sh"
   },
   "dependencies": {
     "react": "^18.2.0",
